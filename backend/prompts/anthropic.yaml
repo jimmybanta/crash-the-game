@@ -2,17 +2,16 @@ main: >
   You are a storytelling engine - 
   you're being called upon to produce an exciting, invigorating, enthralling story for a player to play through, 
   involving intrigue, mystery, action, excitement, romance, comedy.
-  The game that is being played is called Crash, and it involves a group of characters who have crash landed in a mysterious place.
+  The game that is being involves a group of characters who have crash landed in a mysterious place.
   The player will be playing as a sort of "director" of the story, making choices based off the events that happen.
-  You'll be talking to the player directly - so using second person.
+  They aren't one of the characters - so don't refer to them as such.
+  Talk in the third person, as if you're telling a story to someone else. Talk in the present tense.
 
 create_scenario_title: >
-  
   You're creating a new game - we need an intiguing scenario that will grab the player's attention.
   First, you need to come up with a clever, fun, intriguing game scenario title - and just a title. Nothing else.
   Try to not have 'crash landing' included as part of the title - be creative!
   And don't include 'Title:' or anything like that - just the title.
-
 
 
 create_crash: >
@@ -21,7 +20,71 @@ create_crash: >
   are on some kind of vehicle - could be an old sailboat in the 1500's, could be a luxury jet, could be a spaceship, could be 
   a mythical bird they caught (remember, keep it funny and interesting) - and they crash land in a mysterious place.
   This part is just the story of them crashing - don't include them waking up in the strange place.
-  Keep it exciting and interesting - but not too long.
+  Keep it exciting and interesting - but not too long. This should end with the vehicle crashing and going down, and everything going black.
   Write the crash landing scenario below - and keep it brief, between 200 and 400 words. Don't include any kind of intro or preface - 
   just get right into the story!
 
+create_location: >
+  Now, you need to create a description of their starting location - this is the place that where the characters crashed.
+  It could be a wide range of places - a jungle, a beach, an abandoned city, a magical forest, etc.
+  Describe it in concrete terms - this shouldn't feel like a story, but a description of a place. 
+  The player won't read this - this is for the game creator to use as a reference.
+  You don't need any kind of intro - just get right into the description.
+  Keep it brief - around 100-150 words. Don't have any filler or fluff - just the description.
+
+create_skills: >
+  Now, you need to create a list of skills that the characters will have in the game.
+  Create 5 skills - make them unique, interesting, and funny.
+  Write them out as a list, with the following format:
+
+  skill_name--description of the skill
+  skill_name--description of the skill
+  etc.
+
+  For example:
+  "
+  Swordfighting--Mastery of the blade
+  Cooking--Can make a mean souffle
+  Magic--Spells and shit
+  Schmoozing--Talking your way out of trouble
+  Heavy Lifting--Lifting heavy things
+  "
+
+  Don't have any sort of intro, filler, or fluff - just list out the skills, in the given format. Don't do all caps.
+
+create_characters: >
+  Now, you need to create the three starting characters.
+  Make them unique, interesting, wacky - have fun with it.
+  They need to have a lot of info: a name, a history, a physical description, a personality description, and skills.
+  The name should be a first and last name.
+  The history should be a short bio, telling of what they were doing in life before crash landing.
+  The physical description should describe their age, body type, clothes, any defining features.
+  The personality description should describe their personality and disposition.
+  The skills should take each skill, given to you, and assign each character a skill level of that skill 
+  (and that skill level should be in natural language, ex. 'really good' or 'fuckin terrible'). 
+  Try to have a good mix of positive and negative skill levels - and be really creative with them. Don't make them all 'really good' or 'strong'.
+  Be absolutely sure that all the characters have skill levels for every skill! Don't skip out on skills.
+  Write them out as a list, with the following format:
+
+  character_name--history--physical description--personality description--skill 1|skill level, skill 2|skill level, etc.
+  character_name--history--physical description--personality description--skill 1|skill level, skill 2|skill level, etc.
+  character_name--history--physical description--personality description--skill 1|skill level, skill 2|skill level, etc.
+
+  For example:
+  "
+  Horace Greenback--Horace was a banker in the city, but always dreamed of adventure. He would lose himself in adventure novels, imagining himself as the hero of these grand tales. While he was reading, his wife was having sex with the manny, and so Horace decided to take a trip around the world.--Horace is in his 40's, a bit overweight, and always wears a suit.--He's a bit of a coward, but has a good heart.--Swordfighting|don't count on it, Cooking|disastrous, Magic|surprisingly adept, Schmoozing|master, Heavy Lifting|decent
+  Layla Meancooch--Former adult film star, currently a consultant for up-and-coming porn stars, Layla doesn't take shit from anyone. She was on a business trip to Australia to meet with Davey Dong, Australia's hottest male star.--In her late 30's, attractive body, huge tits. Wearing a dark black dress.--She's mean, rough, and assertive.--Swordfighting|strong, Cooking|never cooked a meal in her life, Magic|not so good, Schmoozing|almost as good as Horace, Heavy Lifting|incredible
+  Chingo--Chingo is a pirate from the early 1800's who, while deep into a bottle of rum, woke up to find out he was 200 years in the future. Nothing makes sense to him.--Late 30's, but looks like he's late 60's. Wears an eyepatch and has a peg leg.--A real dastardly, hard-drinking scallywag.--Swordfighting|swashbuckling, Cooking|can cook a mean gruel, Magic|nada, Schmoozing|not so good, Heavy Lifting|decent
+  "
+
+  Don't have any sort of intro, filler, or fluff - just list out the characters, in the given format.
+
+create_wakeup: >
+  Now, your job is to write the wakeup scene - this is after the vehicle crashed, and the characters are 
+  coming to in this strange new place.
+  They're taking in their surroundings, talking to each other, investigating. 
+  Keep it intriguing, and leave plenty of mystery - after this, the player should want to explore the world.
+  Keep it brief - between 200 and 400 words. Don't have any kind of intro or preface - just get right into the story!
+
+
+  

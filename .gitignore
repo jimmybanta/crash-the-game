@@ -8,6 +8,7 @@ temp.ipynb
 */venv
 .env
 run.py
+*/game_files/
 
 tests
 __pycache__

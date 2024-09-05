@@ -18,11 +18,14 @@ def load_yaml(file):
 
 
 
-def add_info_to_initialization_prompt(theme, details, prompt=''):
+def add_info_to_initialization_prompt(theme, timeframe, details, prompt=''):
     ''' Adds information to an initialization prompt - for use when starting a new game. '''
 
-    # create the prompt to generate the title
+    # add theme to the prompt
     prompt += f' The theme is {theme}. ' if theme else 'There is no specified theme. '
+
+    # add timeframe
+    prompt += f'The timeframe is {timeframe}. ' if timeframe else 'There is no specified timeframe. '
 
     # add details
     if details:

@@ -62,3 +62,8 @@ llm = {
     'api_key': set_llm_value('API_KEY'),
     'model': set_llm_value('MODEL'),
 }
+
+file_save = {
+    'path': set_value('FILE_SAVE_PATH'),
+    'max_size': int(set_value('MAX_FILE_SIZE'))
+}

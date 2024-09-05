@@ -13,10 +13,14 @@ class Game(models.Model):
     # the title of the game - will be created by AI
     title = models.CharField(max_length=100, null=True)
 
-    # theme of the game
+    # theme of the game - a word or phrase
     theme = models.CharField(max_length=100, null=True)
 
-    # starting details -- extra details that can be added to initialize the game
+    # timeframe of the game - a phrase to signify what time period the game is set in
+    ## ex: "medieval", "futuristic", "modern", "1960's"
+    timeframe = models.CharField(max_length=100, null=True)
+
+    # starting details -- extra details that can be added into the story of the game
     starting_details = models.CharField(max_length=1000, null=True)
 
     # locations - the locations in the game
