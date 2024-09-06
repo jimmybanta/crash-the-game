@@ -21,7 +21,6 @@ const Setup = ({ onSubmit }) => {
     return (
         <div className='container flex-column'
         style={{ height: '90%', width: '90%', 
-            border: '1px white solid',
             justifyContent: 'center', alignItems: 'center',
             gap: '2%'
         }}>
@@ -57,7 +56,7 @@ const Setup = ({ onSubmit }) => {
             </div>
 
             <div 
-            className='home-button text'
+            className='button home-button text'
             style={{marginTop: '3%'}}
             onClick={() => handleSubmit()}>
                 Let's Play!

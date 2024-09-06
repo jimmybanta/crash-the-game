@@ -96,6 +96,11 @@ html, body {
   user-select: none;
 }
 
+.title {
+  font-size: calc(1rem + 1.5vw); /* Relative font size */
+  user-select: none;
+}
+
 
 
 /* containers */

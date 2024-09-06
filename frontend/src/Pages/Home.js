@@ -10,7 +10,7 @@ const Home = ({onSetCurrentPage}) => {
     style={{width: '100%', height: '100%',
     }}>
 
-      <div className='container'
+      <div className='container flex-column' 
       style={{ width: '100%', 
       height: '33%', 
       }}>
@@ -18,10 +18,7 @@ const Home = ({onSetCurrentPage}) => {
       </div>
 
       <div className='container flex-column'
-      style={{ justifyContent: 'center', alignItems: 'center',
-        width: '100%', 
-        height: '66%', 
-        gap: '5%'}}>
+      style={{ width: '100%', height: '66%', gap: '5%'}}>
 
       
           <div

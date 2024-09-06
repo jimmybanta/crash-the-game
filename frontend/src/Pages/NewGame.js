@@ -54,6 +54,7 @@ const NewGame = () => {
     <div className='container flex-column'
         style={{ justifyContent: 'center', alignItems: 'center',
                 height: '90%', width: '80%',
+                border: '1px white solid',
         }}>
 
         
@@ -74,6 +75,7 @@ const NewGame = () => {
                 details={details}
                 saveKey={saveKey}
                 gameId={gameId}
+                newGame={true}
             />}
          
     </div>

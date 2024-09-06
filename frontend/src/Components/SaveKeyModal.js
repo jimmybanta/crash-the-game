@@ -21,6 +21,7 @@ const SaveKeyModal = ({ toggle, saveKey }) => {
 
     return (
     <Modal 
+    centered
     isOpen={true}
     toggle={toggle}>
         <ModalHeader style={{userSelect: 'none'}}>
