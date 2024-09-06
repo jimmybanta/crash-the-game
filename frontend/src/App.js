@@ -1,5 +1,6 @@
 import './App.css';
 
+
 import React, { useState } from 'react';
 
 import Home from './Pages/Home';
@@ -15,11 +16,8 @@ function App() {
   return (
     <div className="App">
 
-      <div className='container' 
-        style={{ display: 'flex', flexDirection: 'column',
-                justifyContent: 'center', alignItems: 'center',
-                height: '100vh', textAlign: 'center', 
-                }}>
+      <div className='container flex-column' 
+        style={{ height: '100vh' }}>
 
         {currentPage === 'Home' && 
         <Home

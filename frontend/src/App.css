@@ -4,6 +4,8 @@
 
 :root {
   --background-color: #1d1d1d;
+  --text-color: #e3e9f5;
+  --modal-background-color: #c8c8c8;
 }
 
 .App {
@@ -21,13 +23,12 @@ html, body {
 
 
 .text {
-  color: #e3e9f5;
+  color: var(--text-color);
 }
 
+
 /* buttons */
-.home-button {
-  background-color: var(--background-color);
-  font-size: calc(2rem + 2vw); /* Relative font size */
+.button {
   padding: 10px 20px;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -37,9 +38,55 @@ html, body {
   user-select: none;
 }
 
+.modal-button {
+  background-color: white;
+  font-size: calc(.75rem + .5vw); /* Relative font size */
+}
+
+.modal-button:hover {
+  background-color: var(--background-color);
+  color: var(--modal-background-color);
+}
+
+.home-button {
+  background-color: var(--background-color);
+  font-size: calc(2rem + 2vw); /* Relative font size */
+}
+
 .home-button:hover {
-  background-color: #e3e9f5;
+  background-color: var(--text-color);
   color: var(--background-color);
+}
+
+/* inputs */
+
+.setup-input {
+  background-color: var(--background-color);
+  border: none; /* Remove default borders */
+  color: var(--text-color); /* Set text color */
+  border-bottom: 2px solid var(--text-color); /* Add a line below */
+  padding: 5px 0; /* Add some padding */
+  outline: none; /* Remove default outline */
+  width: 60%; /* Full width */
+  box-sizing: border-box; /* Include padding and border in element's total width and height */
+  font-size: calc(1rem + .5vw); /* Relative font size */
+  font-family: 'Handjet', sans-serif;
+  text-align: center;
+}
+
+.setup-input::placeholder {
+  color: var(--text-color); /* Set placeholder color */
+  opacity: 0.5; /* Make placeholder slightly transparent */
+}
+
+.setup-input:focus {
+  border-bottom-color: var(--text-color); /* Keep the line color on focus */
+  animation: blink-cursor 1s step-end infinite; /* Blinking cursor */
+}
+
+.setup-input-header {
+  font-size: calc(2rem + 1.5vw); /* Relative font size */
+  user-select: none;
 }
 
 /* text */
@@ -54,15 +101,51 @@ html, body {
 /* containers */
 
 .container {
-  border: 1px solid #e3e9f5;
+  border: 0px solid #e3e9f5;
+  box-sizing: border-box;
 }
 
 .flex-column {
   display: flex;
   flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 
 .flex-row {
   display: flex;
   flex-direction: row;
+  align-items: center;
+  justify-content: center;
+}
+
+
+/* loading */ 
+
+.dot {
+  animation: blink 1.4s infinite both;
+}
+
+.dot:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes blink {
+  0%, 20%, 50%, 80%, 100% {
+    opacity: 1;
+  }
+  40% {
+    opacity: 0;
+  }
+  60% {
+    opacity: 0;
+  }
 }
