@@ -155,11 +155,7 @@ def create_wakeup(crash_story, location_description, skills, characters,
     
     wakeup_prompt += '''Now generate the wakeup scene for the game. 
     Remember that the player will read this, and it should be engaging and interesting. 
-    Don't start it with a title or intro or anything - just jump right into the scene.
-    End the scene with something interesting happening, a prompt for the player to respond to.
-    Remember that the player is not an actual character, but is more like a director. The characters don't 
-    refer directly to the player at any point.
-    Refer to the player in the second person - something like 'How do you want to respond?' or 'What do you do next?'''
+    Don't start it with a title or intro or anything - just jump right into the scene.'''
 
     # return the prompt function as a generator, for streaming
     return prompt(wakeup_prompt, max_tokens=1000, stream=True, context='create_wakeup')

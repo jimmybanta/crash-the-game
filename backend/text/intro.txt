@@ -1,0 +1,9 @@
+Welcome to Crash - an AI-generated, interactive story game.
+You've met your characters, witnessed them crash land and wake up in a strange place.
+Now you need to guide them through the story.
+Think of yourself as an angel (or devil), sitting on their shoulders, whispering in their ears.
+Each turn, you'll make suggestions and interact with the characters.
+Speaking of the characters - on the right -> of the screen, you can see more info about your characters - their histories, personalities, skills.
+Be creative, be bold, be kind, be cruel. Do whatever you like - the world is your oyster!
+
+So - what will you do next?
