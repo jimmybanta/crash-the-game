@@ -83,13 +83,42 @@ def create_skills(crash_story, location_description,
     skills_prompt += '''Now generate 10 skills that the characters will need to survive in this location.
     Be sure to use the format that I specified.'''
 
-    # prompt the LLM for the skills
-    skills = prompt(skills_prompt, max_tokens=500, context='create_skills')
+    formatting_correct = False
+    attempts = 0
 
-    # separate out the skills
-    skills_list = [skill.split('--') for skill in skills.split('\n')]
+    while not formatting_correct:
+        attempts += 1
+        # prompt the LLM for the skills
+        skills = prompt(skills_prompt, max_tokens=500, context='create_skills')
 
-    return skills, skills_list
+        # separate out the skills
+        skills_list = [skill for skill in skills.split('\n')]
+
+        final_skills = []
+
+        for skill in skills_list:
+            if skill:
+                # split the skill into its parts
+                # if this doesn't work, then the formatting was incorrect, 
+                # or maybe it added an intro or something
+                # so skip it - and at the end we'll check if we have enough skills
+                # if we don't, we'll re-prompt until it gets it right
+                try:
+                    name, description = skill.split('--')
+                except:
+                    continue
+
+                final_skills.append((name, description))
+
+        # check if the formatting is correct
+        if len(final_skills) >= 5 and len(final_skills) <= 10:
+            if all([len(skill) == 2 and all(skill) for skill in final_skills]):
+                formatting_correct = True
+
+        if attempts > 5:
+            return 'Too many attempts. Please try again.', None
+
+    return skills, final_skills
 
 def create_characters(crash_story, location_description, skills, 
                       title=None, theme=None, timeframe=None, details=None):
@@ -111,28 +140,50 @@ def create_characters(crash_story, location_description, skills,
     named thus far. Be sure to use the format that I specified.'''
 
     # prompt the LLM for the characters
-    characters = prompt(characters_prompt, max_tokens=500, context='create_characters')
+    formatting_correct = False
 
-    characters_list = [character for character in characters.split('\n')]
+    attempts = 0
 
-    final_characters = []
-    
-    for character in characters_list:
-        if character:
-            name, history, physical, personality, skills = character.split('--')
-            skills = skills.split(', ')
-            skill_dict = {}
-            for skill in skills:
-                skill_name, skill_level = skill.split('|')
-                skill_dict[skill_name] = skill_level
-            final_characters.append({
-                'name': name,
-                'history': history,
-                'physical': physical,
-                'personality': personality,
-                'skills': skill_dict
-            })
+    while not formatting_correct:
+        
+        characters = prompt(characters_prompt, max_tokens=500, context='create_characters')
+        attempts += 1
 
+        characters_list = [character for character in characters.split('\n')]
+        
+        final_characters = []
+        
+        for character in characters_list:
+            if character:
+                # split the character into its parts
+                # if this doesn't work, then the formatting was incorrect, 
+                # or maybe it added an intro or something
+                # so skip it - and at the end we'll check if we have 3 characters
+                # if we don't, we'll re-prompt until it gets it right
+                try:
+                    name, history, physical, personality, skills = character.split('--')
+                except:
+                    continue
+                skills = skills.split(', ')
+                skill_dict = {}
+                for skill in skills:
+                    skill_name, skill_level = skill.split('|')
+                    skill_dict[skill_name] = skill_level
+                final_characters.append({
+                    'name': name,
+                    'history': history,
+                    'physical': physical,
+                    'personality': personality,
+                    'skills': skill_dict
+                })
+
+        # check if the formatting is correct
+        if len(final_characters) == 3:
+            formatting_correct = True
+        
+        if attempts > 5:
+            return 'Too many attempts. Please try again.', None
+            
     return characters, final_characters
 
 

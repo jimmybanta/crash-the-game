@@ -137,7 +137,7 @@ def initialize_game_wakeup(request):
     skills, skills_list = create_skills(crash_story, location_description, 
                             title=game.title, theme=game.theme,
                             timeframe=game.timeframe, details=game.starting_details)
-    
+        
     for name, description in skills_list:
         skill = Skill.objects.create(
             name=name,
@@ -155,28 +155,18 @@ def initialize_game_wakeup(request):
     characters, characters_list = create_characters(crash_story, location_description, skills,
                                                 title=game.title, theme=game.theme,
                                                 timeframe=game.timeframe, details=game.starting_details)
-
-    characters_list = [character for character in characters.split('\n')]
-    
+    # characters list is a list of character dicts
     for character in characters_list:
-        if character:
-            name, history, physical, personality, skills = character.split('--')
-
-            skills = skills.split(', ')
-            skill_dict = {}
-            for skill in skills:
-                skill_name, skill_level = skill.split('|')
-                skill_dict[skill_name] = skill_level
             
-            new_character = Character.objects.create(
-                name=name,
-                history=history,
-                physical_description=physical,
-                personality=personality,
-                skills=skill_dict
-            )
+        new_character = Character.objects.create(
+            name=character['name'],
+            history=character['history'],
+            physical_description=character['physical'],
+            personality=character['personality'],
+            skills=character['skills']
+        )
 
-            game.characters.add(new_character)
+        game.characters.add(new_character)
 
     game.save()
 
