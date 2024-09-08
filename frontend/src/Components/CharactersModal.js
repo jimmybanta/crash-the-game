@@ -125,7 +125,7 @@ const CharactersModal = ({ toggle, characters, skillDescriptions }) => {
 
                 {Object.entries(skills).map(([skill, value]) => {
 
-                    const tooltipId = `${skill}-${characterId}`.replace(' ', '-');
+                    const tooltipId = `${skill}-${characterId}`.replace(/ /g, '-');
 
                     return (
                         <div className='modal-text'>
@@ -142,6 +142,8 @@ const CharactersModal = ({ toggle, characters, skillDescriptions }) => {
                             isOpen={tooltipOpen[characterId][skill]}
                             toggle={() => toggleTooltip(characterId, skill)}
                             target={tooltipId}
+                            type='dark'
+                            effect='float'
                             >
                                 {characterSkillDescriptions[skill]}
                             </Tooltip>

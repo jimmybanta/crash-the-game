@@ -89,4 +89,8 @@ create_wakeup: >
   refer directly to the player at any point.
 
 
-  
+main_loop: >
+  Now, the player is playing the game. You'll be given the location, characters, and a history
+  of what has happened so far. Then, the player will say what they want to do in the story -
+  respond with what happens as a result of what they've chosen.
+  Keep in interesting, exciting, and fun - and keep the player engaged.

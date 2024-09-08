@@ -24,7 +24,7 @@ const NewGame = () => {
 
     const [setupComplete, setSetupComplete] = useState(false);
 
-    const [devMode, setDevMode] = useState('true');
+    const [devMode, setDevMode] = useState('false');
 
 
     useEffect(() => {

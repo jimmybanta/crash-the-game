@@ -16,4 +16,5 @@ urlpatterns = [
     path('initialize_game_crash/', views.initialize_game_crash),
     path('initialize_game_wakeup/', views.initialize_game_wakeup),
     path('initialize_game_intro/', views.initialize_game_intro),
+    path('main_loop/', views.main_loop),
 ]

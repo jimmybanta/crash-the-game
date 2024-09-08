@@ -15,7 +15,9 @@ from games.serializers import CharacterSerializer, SkillSerializer
 
 from games.models import Game, Location, Character, Skill
 from games.initialization import create_scenario_title, create_crash, create_location, create_skills, create_characters, create_wakeup
+from games.gameplay import main_loop
 
+from prompting import prompt
 
 from games.save_game import save_text
 
@@ -72,8 +74,8 @@ def initialize_game_key(request):
     if dev == 'true':
         time.sleep(1)
         return JsonResponse({
-            'save_key': '3edd17c8-c7ef-4cf6-89c1-636985c639bb', 
-            'game_id': 142})
+            'save_key': '0a8b6884-3e52-45f9-b560-4ce566200c3d', 
+            'game_id': 140})
 
     # generate a new key
     save_key = uuid4()
@@ -321,3 +323,86 @@ So - what will you do next?'''
 
 
     return StreamingHttpResponse(generate_response(), content_type='text/plain')
+
+@csrf_exempt
+@api_view(['POST'])
+def main_loop(request):
+    '''
+    The main loop of the game.
+    '''
+
+    game_id = request.data['game_id']
+    history = request.data['history']
+    user_input = request.data['user_input']
+
+    dev = request.data['dev']
+    if dev == 'true':
+        time.sleep(1)
+        with open('/Users/jimbo/Documents/coding/projects/survival-game/backend/game_files/142/full_text/0.json', 'r') as f:
+            data = json.load(f)
+
+            def generate_response():
+                for char in data[1]['text']:
+                    time.sleep(0.01)
+                    yield char
+
+            return StreamingHttpResponse(generate_response(), content_type='text/plain')
+
+    # remove the game intro from the history
+    history = [item for item in history if item['writer'] != 'game_intro']
+
+    ## first, add the theme, timeframe, and details to the system prompt
+    game = Game.objects.get(id=game_id)
+    
+    main_loop_prompt = 'Here are the theme, timeframe, and details of the game:\n'
+
+    main_loop_prompt += f'Theme: {game.theme}\n' if game.theme else 'There is no specified theme.\n'
+    main_loop_prompt += f'Timeframe: {game.timeframe}\n' if game.timeframe else 'There is no specified timeframe.\n'
+    main_loop_prompt += f'Details: {game.starting_details}\n\n' if game.starting_details else 'There are no specified details.\n\n'
+
+    ## then, add the location, skills, and characters to the system prompt
+    game_initialization_path = f'{config.file_save["path"]}/{game_id}/initialization/0.json'
+
+    with open(game_initialization_path, 'r') as f:
+        data = json.load(f)
+
+    location_name = data[0]['text']
+    location_description = data[1]['text']
+    skills = data[2]['text']
+    characters = data[3]['text']
+
+    main_loop_prompt += 'Here are the location name, description, skills, and characters:\n'
+    main_loop_prompt += f'{location_name}\n'
+    main_loop_prompt += f'{location_description}\n'
+    main_loop_prompt += f'{skills}\n'
+    main_loop_prompt += f'{characters}\n\n'
+
+    main_loop_prompt += 'Here is the history of the game thus far:\n\n'
+
+    # add the user input to the history
+    history.append({'writer': 'human', 'text': f'{user_input}. Remember - when in doubt, make something surprising and exciting happen!'})
+
+    # add a human message before the crash story
+    history.insert(0, {'writer': 'human', 'text': 'Start the story for me - have them crash land.'})
+
+    # add a human message before the wakeup story
+    history.insert(2, {'writer': 'human', 'text': 'Now tell the story of them waking up in this new, strange place.'})
+
+    def generate_response():
+        response = ''
+        for chunk in prompt(history, context='main_loop', system=main_loop_prompt, stream=True):
+            response += chunk
+            yield chunk
+        
+        # save the crash story to file
+        save_text(game_id=game_id, text=response, writer='ai')
+    
+    return StreamingHttpResponse(generate_response(), content_type='text/plain')
+
+
+
+
+
+
+
+

@@ -17,13 +17,15 @@ PROMPTS = load_yaml(f'prompts/{PROVIDER}.yaml')
 
 # instantiate the LLM
 if PROVIDER == 'ANTHROPIC':
-    MODEL = ChatAnthropic(model=config.llm['model'], api_key=config.llm['api_key'])
+    MODEL = ChatAnthropic(model=config.llm['model'], api_key=config.llm['api_key'], max_tokens_to_sample=2048)
 
 
 
 
 def prompt(message, 
-           context=None, stream=False, 
+           context=None, 
+           system=None, 
+           stream=False, 
            max_tokens=1024, 
            #caching=False, return_usage=False
            ):
@@ -39,6 +41,10 @@ def prompt(message,
     ## depending on context of the game, then we can do that here
     if context:
         system_prompt += PROMPTS[context]
+    
+    # if there's additional system text to add
+    if system:
+        system_prompt += system
 
     # set up the LLM chain
     prompt_template = ChatPromptTemplate.from_messages(
@@ -50,11 +56,20 @@ def prompt(message,
 
     chain = prompt_template | MODEL
 
+    # if message is just a string, then send it as a human message
+    if type(message) == str:
+        messages = {'messages': [HumanMessage(content=message)]}
+    # if message is a list, then there will be some AIMessages, some HumanMessages
+    elif type(message) == list:
+        messages = {'messages': []}
+        for item in message:
+            if item['writer'] == 'ai':
+                messages['messages'].append(AIMessage(content=item['text']))
+            elif item['writer'] == 'human':
+                messages['messages'].append(HumanMessage(content=item['text']))
 
     # prompting from anthropic
     if PROVIDER == 'ANTHROPIC':
-                
-        messages = {'messages': [HumanMessage(content=message)]}
 
         if stream:
             return prompt_stream(messages, chain, 

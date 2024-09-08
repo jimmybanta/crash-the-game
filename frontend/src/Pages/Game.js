@@ -48,7 +48,6 @@ const Game = ( props ) => {
         const initializeGame = async () => {
 
             if (newGame) {
-                console.log('initializing new game');
                 // make api call to initialize game
 
                 // first - generate the title
@@ -87,7 +86,10 @@ const Game = ( props ) => {
 
                 // add crash story to history so it's shown
                 let tempHistory = [...history];
-                tempHistory.push(streamAccumulator);
+                tempHistory.push({
+                    'writer': 'ai',
+                    'text': streamAccumulator
+                });
                 setHistory(tempHistory);
 
                 // then - generate the wakeup story
@@ -112,7 +114,10 @@ const Game = ( props ) => {
                 setCurrentStream('');
 
                 // add it to history
-                tempHistory.push(streamAccumulator);
+                tempHistory.push({
+                    'writer': 'ai',
+                    'text': streamAccumulator
+                });
                 setHistory(tempHistory);
 
                 
@@ -141,7 +146,6 @@ const Game = ( props ) => {
                     }
                 });
 
-                console.log(skillsResp.data);
                 setSkills(skillsResp.data);
 
             }
@@ -185,7 +189,57 @@ const Game = ( props ) => {
                 setCurrentStream(streamAccumulator);
             }
 
+            // clear the current stream
+            setCurrentStream('');
 
+            // add it to history
+            let tempHistory = [...history];
+            tempHistory.push({
+                'writer': 'game_intro',
+                'text': streamAccumulator
+            });
+            setHistory(tempHistory);
+
+
+
+
+        }
+        else {
+
+            // add the user text to history
+            let tempHistory = [...history];
+            tempHistory.push({
+                'writer': 'human',
+                'text': text
+            });
+            setHistory(tempHistory);
+
+            // call the main loop
+            const mainLoopStream = await generateStream(
+                '/games/main_loop/',
+                {   game_id: gameId,
+                    history: history,
+                    user_input: text,
+                    dev: devMode
+                 }
+            );
+
+            let streamAccumulator = '';
+            for await (const chunk of mainLoopStream) {
+                // add chunk to the current stream
+                streamAccumulator += chunk;
+                setCurrentStream(streamAccumulator);
+            }
+
+            // clear the current stream
+            setCurrentStream('');
+
+            // add it to history
+            tempHistory.push({
+                'writer': 'ai',
+                'text': streamAccumulator
+            });
+            setHistory(tempHistory);
         }
 
     };
@@ -220,14 +274,14 @@ const Game = ( props ) => {
             <Header newGame={newGame} title={title} />
 
             {/* go through the history, and render each text box */}
-            {history.map((text) => {
+            {history.map((item) => {
                 return (
-                    <TextBox text={text} />
+                    <TextBox writer={item.writer} text={item.text} />
                 );
             })};
 
             {/* render the current stream */}
-            <TextBox text={currentStream} />
+            <TextBox writer={'ai'} text={currentStream}/>
 
 
             {/* render the user text input */}
@@ -254,12 +308,6 @@ const Game = ( props ) => {
         }
 
         </div>
-         
-    
-
-        
-
-    
     
     )
     }

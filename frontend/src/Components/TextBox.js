@@ -3,12 +3,12 @@ import { React, useState, useEffect } from 'react';
 import { ReactTyped } from 'react-typed';
 
 
-const TextBox = ({ text }) => {
+const TextBox = ({ writer, text, temp }) => {
 
     //const [showArrow, setShowArrow] = useState(false);
     const [collapsed, setCollapsed] = useState(false);
 
-    const [italicize, setItalicize] = useState(false);
+    const [italicize, setItalicize] = useState(writer === 'human' || writer === 'game_intro' ? true : false);
     
 
     // if the text starts with '<i>', then italicize it
@@ -70,7 +70,7 @@ const TextBox = ({ text }) => {
     return (
         <div className='container text paragraphs'
             style={{ 
-                textAlign: 'left', 
+                textAlign: writer === 'ai' || writer === 'game_intro' ? 'left' : 'right',
                 whiteSpace: 'pre-wrap', position: 'relative',
                 cursor: 'pointer',
                 marginBottom: '5%',
@@ -80,9 +80,10 @@ const TextBox = ({ text }) => {
             onClick={handleCollapse}
         >
             <p 
-            style={{ opacity: collapsed ? '.6' : '1',
-                    fontStyle: italicize ? 'italic' : 'normal'
-             }}>
+                style={{ opacity: collapsed ? '.6' : '1',
+                        fontStyle: italicize ? 'italic' : 'normal',
+                }}
+            >
                 {renderText()}
             </p>
             {/* {renderArrow()} */}

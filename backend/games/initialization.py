@@ -80,7 +80,7 @@ def create_skills(crash_story, location_description,
     skills_prompt += f'''The characters have just crashed, and here is the crash story: {crash_story}.
         The description of the starting location for the game is: {location_description}.'''
     
-    skills_prompt += '''Now generate 10 skills that the characters will need to survive in this location.
+    skills_prompt += '''Now generate 5-10 skills that the characters will need to survive in this location.
     Be sure to use the format that I specified.'''
 
     formatting_correct = False
@@ -105,6 +105,7 @@ def create_skills(crash_story, location_description,
                 # if we don't, we'll re-prompt until it gets it right
                 try:
                     name, description = skill.split('--')
+                    name = name.strip().replace('_', ' ').capitalize()
                 except:
                     continue
 
