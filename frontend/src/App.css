@@ -138,6 +138,13 @@ html, body {
   color: var(--modal-text-color);
 }
 
+.modal-skill-text {
+  font-size: calc(.75rem + .5vw); /* Relative font size */
+  letter-spacing: 0.04em;
+  user-select: none;
+  color: var(--modal-text-color);
+}
+
 .modal-text-header {
   font-size: calc(1.5rem + .5vw); /* Relative font size */
   user-select: none;

@@ -2,12 +2,13 @@
 import { 
     Modal, ModalHeader, 
     ModalBody, ModalFooter,
+    Tooltip
 } from "reactstrap";
 
 import { React, useState } from "react";
 
 
-const CharactersModal = ({ toggle, characters }) => {
+const CharactersModal = ({ toggle, characters, skillDescriptions }) => {
 
     const initialCharacterState = characters.reduce((acc, character) => {
         acc[character.id] = false;
@@ -15,6 +16,30 @@ const CharactersModal = ({ toggle, characters }) => {
     }, {});
 
     const [showCharacters, setShowCharacters] = useState(initialCharacterState);
+
+    const initialTooltipState = characters.reduce((acc, character) => {
+
+        acc[character.id] = {};
+        Object.keys(character.skills).forEach((skill) => {
+            acc[character.id][skill] = false;
+        });
+        return acc;
+    }, {});
+
+
+
+    const [tooltipOpen, setTooltipOpen] = useState(initialTooltipState);
+
+
+
+
+
+    const toggleTooltip = (characterId, skill) => {
+        console.log(skillDescriptions);
+        let tempTooltipOpen = {...tooltipOpen};
+        tempTooltipOpen[characterId][skill] = !tempTooltipOpen[characterId][skill];
+        setTooltipOpen(tempTooltipOpen);
+    };
 
     
 
@@ -34,7 +59,6 @@ const CharactersModal = ({ toggle, characters }) => {
                 onClick={(character) => {
                     let tempShowCharacters = {...showCharacters};
                     tempShowCharacters[characterId] = !tempShowCharacters[characterId];
-                    console.log(tempShowCharacters);
                     setShowCharacters(tempShowCharacters);
                 }}>
                     {character.name}
@@ -75,7 +99,7 @@ const CharactersModal = ({ toggle, characters }) => {
                         <em>Skills</em>
                     </div>
                     <div className='modal-text'>
-                        {renderSkills(character.skills)}
+                        {renderSkills(character.id, character.skills)}
                     </div>
                 </div>
                 
@@ -86,15 +110,42 @@ const CharactersModal = ({ toggle, characters }) => {
         }
     }
     
-    const renderSkills = (skills) => {
+    const renderSkills = (characterId, skills) => {
+
+        let characterSkillDescriptions = {};
+
+        skillDescriptions.forEach((skill) => {
+            if (skill.name in skills) {
+                characterSkillDescriptions[skill.name] = skill.description;
+            }
+        });
 
         return (
             <div className='container flex-column'>
 
                 {Object.entries(skills).map(([skill, value]) => {
+
+                    const tooltipId = `${skill}-${characterId}`.replace(' ', '-');
+
                     return (
                         <div className='modal-text'>
-                            <strong>{skill}</strong>: {value}
+
+                            <strong 
+                                id={tooltipId}
+                                className='modal-skill-text'>
+                                {skill}: 
+                            </strong> 
+                            &nbsp;
+
+                            <Tooltip
+                            placement='left'
+                            isOpen={tooltipOpen[characterId][skill]}
+                            toggle={() => toggleTooltip(characterId, skill)}
+                            target={tooltipId}
+                            >
+                                {characterSkillDescriptions[skill]}
+                            </Tooltip>
+                                <em>{value}</em>
                         </div>
                     );
                 }

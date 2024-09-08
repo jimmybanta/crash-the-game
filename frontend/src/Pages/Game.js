@@ -12,8 +12,6 @@ import UserText from '../Components/UserText';
 import { generateStream } from '../streaming';
 
 
-const text = "The snow swirls and drifts, obscuring the icy landscape. Samantha's eyes flutter open as she comes to, her head pounding. She coughs, the frigid air stinging her lungs. \n\n\"Where...where am I?\" she murmurs, disoriented. \n\nLiam is already on his feet, surveying the damage to the plane. \"Looks like we went down hard. That engine failure came out of nowhere.\"\n\nEsteban groans, pulling himself upright in his seat. \"This is...unacceptable. I demand to know how soon we can be rescued.\"\n\nSamantha takes in their surroundings, her brow furrowed. \"I don't think rescue is coming anytime soon. We're in the middle of nowhere.\"\n\nThe group falls silent as they gaze out at the vast, snow-covered expanse. In the distance, a shadowy shape can be seen, half-buried in the drifts.\n\n\"What is that?\" Esteban squints, peering through the blowing snow.\n\nLiam's expression grows grim. \"I don't know, but I have a feeling we're not alone out here.\"\n\nThe characters turn to face the mysterious structure, their breaths forming puffs of vapor in the frigid air. Samantha's eyes are alight with a gleam of scholarly curiosity, even as a hint of trepidation creeps into her voice.\n\n\"We need to investigate. There may be clues, or even a way to signal for help. But...I can't shake the feeling that we're not the first ones to stumble upon this place.\"\n\nThe player is left with a choice - what do they want the characters to do next? Venture out to explore the strange, half-buried structure, or stay put and try to secure the damaged plane? The path forward is uncertain, and the consequences of their actions could have profound implications.";
-
 const Game = ( props ) => {
 
     // keeping track of where in the game we are
@@ -36,12 +34,13 @@ const Game = ( props ) => {
     const [history, setHistory] = useState([]);
     const [currentStream, setCurrentStream] = useState('');
     const [characters, setCharacters] = useState([]);
+    const [skills, setSkills] = useState([]);
 
     // modals
     const [saveKeyModalOpen, setSaveKeyModalOpen] = useState(false);
     const [charactersModalOpen, setCharactersModalOpen] = useState(false);
 
-    const [devMode, setDevMode] = useState('false');
+    const [devMode, setDevMode] = useState(props.devMode);
 
     // if this is a new game, we need to initialize it
     useEffect(() => {
@@ -111,7 +110,7 @@ const Game = ( props ) => {
 
                 // reset current stream
                 setCurrentStream('');
-                
+
                 // add it to history
                 tempHistory.push(streamAccumulator);
                 setHistory(tempHistory);
@@ -132,6 +131,18 @@ const Game = ( props ) => {
                 });
 
                 setCharacters(charactersResp.data);
+
+                // then, populate the skills
+                const skillsResp = await axios({
+                    method: 'get',
+                    url: '/games/api/skills/',
+                    params: {
+                        game_id: gameId,
+                    }
+                });
+
+                console.log(skillsResp.data);
+                setSkills(skillsResp.data);
 
             }
 
@@ -158,17 +169,6 @@ const Game = ( props ) => {
 
         if (gameIntro) {
             setGameIntro(false);
-            // first, make an api call to get the characters
-            const charactersResp = await axios({
-                method: 'get',
-                url: '/games/api/characters/',
-                params: {
-                    game_id: gameId,
-                }
-            });
-
-            console.log('characters:', charactersResp.data);
-            setCharacters(charactersResp.data);
 
             // then, make an api call to get the game intro
             const gameIntroStream = await generateStream(
@@ -180,9 +180,11 @@ const Game = ( props ) => {
             let streamAccumulator = '';
             for await (const chunk of gameIntroStream) {
                 // add chunk to the current stream
+                // make the chunk italics
                 streamAccumulator += chunk;
                 setCurrentStream(streamAccumulator);
             }
+
 
         }
 
@@ -246,6 +248,7 @@ const Game = ( props ) => {
         {charactersModalOpen &&
             <CharactersModal 
             characters={characters}
+            skillDescriptions={skills}
             toggle={charactersModalToggle}
             />
         }

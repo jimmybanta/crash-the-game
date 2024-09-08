@@ -5,6 +5,8 @@ from rest_framework import routers
 
 router = routers.DefaultRouter()
 router.register(r'characters', views.CharacterViewSet, 'characters')
+router.register(r'skills', views.SkillViewSet, 'skills')
+
 
 
 urlpatterns = [

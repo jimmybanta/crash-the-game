@@ -6,3 +6,8 @@ class CharacterSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Character
         fields = '__all__'
+
+class SkillSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Skill
+        fields = '__all__'

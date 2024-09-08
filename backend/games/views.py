@@ -11,7 +11,7 @@ import json
 
 import config
 
-from games.serializers import CharacterSerializer
+from games.serializers import CharacterSerializer, SkillSerializer
 
 from games.models import Game, Location, Character, Skill
 from games.initialization import create_scenario_title, create_crash, create_location, create_skills, create_characters, create_wakeup
@@ -38,6 +38,24 @@ class CharacterViewSet(viewsets.ModelViewSet):
             # get all characters for the current game
             characters = game.characters.all()
             return characters.order_by('id')
+        
+        else:
+            return None
+        
+class SkillViewSet(viewsets.ModelViewSet):
+    '''
+    API endpoint that allows skills to be viewed.
+    '''
+    serializer_class = SkillSerializer
+
+    def get_queryset(self):
+        game_id = self.request.query_params.get('game_id', None)
+        if game_id is not None:
+
+            game = Game.objects.get(id=game_id)
+            # get all skills for the current game
+            skills = game.skills.all()
+            return skills.order_by('id')
         
         else:
             return None
@@ -114,20 +132,20 @@ def initialize_game_crash(request):
     '''
 
     # wait a couple seconds, to let the player read the title
-    time.sleep(2)
+    time.sleep(0.5)
     
     game_id = request.data['game_id']
 
 
     dev = request.data['dev']
     if dev == 'true':
-        time.sleep(3)
+        time.sleep(0.5)
         with open('/Users/jimbo/Documents/coding/projects/survival-game/backend/game_files/142/full_text/0.json', 'r') as f:
             data = json.load(f)
 
             def generate_response():
                 for char in data[1]['text']:
-                    time.sleep(0.01)
+                    time.sleep(0.0001)
                     yield char
 
             return StreamingHttpResponse(generate_response(), content_type='text/plain')
@@ -173,7 +191,7 @@ def initialize_game_wakeup(request):
                 data = json.load(f)
 
                 for char in data[2]['text']:
-                    time.sleep(0.001)
+                    time.sleep(0.0001)
                     yield char
         return StreamingHttpResponse(generate_response(), content_type='text/plain')
 

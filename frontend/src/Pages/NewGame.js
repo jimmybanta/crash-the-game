@@ -24,7 +24,7 @@ const NewGame = () => {
 
     const [setupComplete, setSetupComplete] = useState(false);
 
-    const [devMode, setDevMode] = useState('false');
+    const [devMode, setDevMode] = useState('true');
 
 
     useEffect(() => {
@@ -84,6 +84,7 @@ const NewGame = () => {
                 saveKey={saveKey}
                 gameId={gameId}
                 newGame={true}
+                devMode={devMode}
             />}
          
     </div>
