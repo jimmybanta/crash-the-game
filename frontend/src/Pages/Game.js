@@ -5,6 +5,7 @@ import axios from 'axios';
 
 import TextBox from '../Components/TextBox';
 import SaveKeyModal from '../Components/SaveKeyModal';
+import CharactersModal from '../Components/CharactersModal';
 import Header from '../Components/Header';
 import UserText from '../Components/UserText';
 
@@ -15,27 +16,32 @@ const text = "The snow swirls and drifts, obscuring the icy landscape. Samantha'
 
 const Game = ( props ) => {
 
+    // keeping track of where in the game we are
+    /// three phases: 
+    // 1. newGame - the game is being initialized
+    // 2. gameIntro - the game is being introduced
+    // 3. gamePlay - the game is being played
     const [newGame, setNewGame] = useState(props.newGame || false);
     const [gameIntro, setGameIntro] = useState(false);
 
+    // game details
     const [gameId, setGameId] = useState(props.gameId);
     const [saveKey, setSaveKey] = useState(props.saveKey);
-
     const [theme, setTheme] = useState(props.theme);
     const [timeframe, setTimeframe] = useState(props.timeframe);
     const [details, setDetails] = useState(props.details);
 
+    // game title and content
     const [title, setTitle] = useState('');
-
     const [history, setHistory] = useState([]);
     const [currentStream, setCurrentStream] = useState('');
+    const [characters, setCharacters] = useState([]);
 
-    const [crashStory, setCrashStory] = useState('');
-    const [wakeupStory, setWakeupStory] = useState('');
-
+    // modals
     const [saveKeyModalOpen, setSaveKeyModalOpen] = useState(false);
+    const [charactersModalOpen, setCharactersModalOpen] = useState(false);
 
-    const [devMode, setDevMode] = useState('true');
+    const [devMode, setDevMode] = useState('false');
 
     // if this is a new game, we need to initialize it
     useEffect(() => {
@@ -62,7 +68,6 @@ const Game = ( props ) => {
                 
                 // then - generate the crash story
 
-                console.log('calling crash');
                 const crashStream = await generateStream(
                     '/games/initialize_game_crash/',
                     { game_id: gameId,
@@ -70,7 +75,7 @@ const Game = ( props ) => {
                      }
                 );
 
-                // stream it int
+                // stream it in
                 let streamAccumulator = '';
                 for await (const chunk of crashStream) {
                     // add chunk to the current stream
@@ -78,10 +83,12 @@ const Game = ( props ) => {
                     setCurrentStream(streamAccumulator);
                 }
 
+                // reset the current stream
+                setCurrentStream('');
+
+                // add crash story to history so it's shown
                 let tempHistory = [...history];
                 tempHistory.push(streamAccumulator);
-
-                // add it to history
                 setHistory(tempHistory);
 
                 // then - generate the wakeup story
@@ -94,7 +101,6 @@ const Game = ( props ) => {
                 );
 
                 // reset the current stream
-                setCurrentStream('');
                 streamAccumulator = '';
                 // stream it in
                 for await (const chunk of wakeupStream) {
@@ -105,15 +111,27 @@ const Game = ( props ) => {
 
                 // reset current stream
                 setCurrentStream('');
-
+                
                 // add it to history
                 tempHistory.push(streamAccumulator);
                 setHistory(tempHistory);
 
+                
+
                 // then, display the userText component 
                 setNewGame(false);
                 setGameIntro(true);
-                
+
+                // then, populate the characters
+                const charactersResp = await axios({
+                    method: 'get',
+                    url: '/games/api/characters/',
+                    params: {
+                        game_id: gameId,
+                    }
+                });
+
+                setCharacters(charactersResp.data);
 
             }
 
@@ -128,6 +146,10 @@ const Game = ( props ) => {
         setSaveKeyModalOpen(!saveKeyModalOpen);
     };
 
+    const charactersModalToggle = () => {
+        setCharactersModalOpen(!charactersModalOpen);
+    };
+
     const test = () => {
         setSaveKeyModalOpen(true);
     };
@@ -136,7 +158,19 @@ const Game = ( props ) => {
 
         if (gameIntro) {
             setGameIntro(false);
-            // make an api call to get the game intro
+            // first, make an api call to get the characters
+            const charactersResp = await axios({
+                method: 'get',
+                url: '/games/api/characters/',
+                params: {
+                    game_id: gameId,
+                }
+            });
+
+            console.log('characters:', charactersResp.data);
+            setCharacters(charactersResp.data);
+
+            // then, make an api call to get the game intro
             const gameIntroStream = await generateStream(
                 '/games/initialize_game_intro/',
                 { game_id: gameId,
@@ -161,7 +195,9 @@ const Game = ( props ) => {
             return (
                 <UserText 
                 gameIntro={gameIntro}
-                onSubmit={(text) => handleUserSubmit(text)}/>
+                onSubmit={(text) => handleUserSubmit(text)}
+                onKeyClick={saveKeyModalToggle}
+                onCharactersClick={charactersModalToggle}/>
             );
         }
         else {
@@ -200,13 +236,18 @@ const Game = ( props ) => {
                     test
                 </button> */}
 
-    
-
         
         {saveKeyModalOpen && 
             <SaveKeyModal 
             saveKey={saveKey} 
             toggle={saveKeyModalToggle}/>
+        }
+
+        {charactersModalOpen &&
+            <CharactersModal 
+            characters={characters}
+            toggle={charactersModalToggle}
+            />
         }
 
         </div>

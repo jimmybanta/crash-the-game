@@ -3,11 +3,15 @@ from django.http import JsonResponse, StreamingHttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.decorators import api_view
 
+from rest_framework import viewsets
+
 import time
 from uuid import uuid4
 import json
 
 import config
+
+from games.serializers import CharacterSerializer
 
 from games.models import Game, Location, Character, Skill
 from games.initialization import create_scenario_title, create_crash, create_location, create_skills, create_characters, create_wakeup
@@ -17,6 +21,26 @@ from games.save_game import save_text
 
 
 # Create your views here.
+
+## Viewsets
+
+class CharacterViewSet(viewsets.ModelViewSet):
+    '''
+    API endpoint that allows characters to be viewed.
+    '''
+    serializer_class = CharacterSerializer
+
+    def get_queryset(self):
+        game_id = self.request.query_params.get('game_id', None)
+        if game_id is not None:
+
+            game = Game.objects.get(id=game_id)
+            # get all characters for the current game
+            characters = game.characters.all()
+            return characters.order_by('id')
+        
+        else:
+            return None
 
 
 @csrf_exempt
@@ -103,7 +127,7 @@ def initialize_game_crash(request):
 
             def generate_response():
                 for char in data[1]['text']:
-                    time.sleep(0.001)
+                    time.sleep(0.01)
                     yield char
 
             return StreamingHttpResponse(generate_response(), content_type='text/plain')
@@ -265,6 +289,9 @@ Each turn, you'll make suggestions and interact with your characters.
 
 Speaking of the characters - on the right -> of the screen, you can see more info about your characters - their histories, personalities, skills.
 Be creative, be bold, be kind, be cruel. Do whatever you like - the world is your oyster!
+
+Speaking of the right of the screen - in the bottom right you should see a button that says 'Key'. 
+Click it.
 
 So - what will you do next?'''
     

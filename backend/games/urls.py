@@ -1,15 +1,14 @@
 from django.urls import path, include
 
 import games.views as views
-
-""" from rest_framework import routers
+from rest_framework import routers
 
 router = routers.DefaultRouter()
-router.register(r'characters', views.CharacterViewSet) """
+router.register(r'characters', views.CharacterViewSet, 'characters')
 
 
 urlpatterns = [
-    #path('api/', include(router.urls)),
+    path('api/', include(router.urls)),
     path('initialize_game_key/', views.initialize_game_key),
     path('initialize_game_title/', views.initialize_game_title),
     path('initialize_game_crash/', views.initialize_game_crash),

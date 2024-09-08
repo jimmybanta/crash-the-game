@@ -2,7 +2,7 @@ import { React, useState, useEffect } from 'react';
 
 
 
-const UserText = ({ gameIntro, onSubmit }) => {
+const UserText = ({ gameIntro, onSubmit, onKeyClick, onCharactersClick }) => {
     // basically a footer, the place where the user can type in their text
 
     const [inputValue, setInputValue] = useState('');
@@ -25,9 +25,39 @@ const UserText = ({ gameIntro, onSubmit }) => {
 
     };
 
+    const renderButtons = () => {
+
+        if (!gameIntro) {
+            return (
+                <div>
+                    <button 
+                    className='button home-button text paragraphs'
+                    style={{ position: 'fixed', bottom: '80px', right: '20px' }}
+                    onClick={onCharactersClick}>
+                        Characters
+                    </button>
+                    <button 
+                    className='button home-button text paragraphs'
+                    style={{ 
+                        position: 'absolute', bottom: '20px', right: '20px' }}
+                    onClick={onKeyClick}>
+                        Key
+                    </button>
+                </div>
+            )
+        }
+        else {
+            return null;
+        }
+    };
+
+
+
+
 
     return (
         <div className='edge-container footer-container'>
+
             <input
             className='user-text user-input'
             placeholder={placeholder}
@@ -36,6 +66,8 @@ const UserText = ({ gameIntro, onSubmit }) => {
             onKeyDown={(e) => handleKeyPress(e)}
             
             />
+
+            {renderButtons()}
             
         
         </div>

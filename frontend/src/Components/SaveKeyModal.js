@@ -24,11 +24,14 @@ const SaveKeyModal = ({ toggle, saveKey }) => {
     centered
     isOpen={true}
     toggle={toggle}>
-        <ModalHeader style={{userSelect: 'none'}}>
+        <ModalHeader 
+        className='modal-text'
+        style={{userSelect: 'none'}}>
             Save Key
         </ModalHeader>
         <ModalBody>
-            <p style={{userSelect: 'none'}}>
+            <p className='modal-text'
+            style={{userSelect: 'none'}}>
                 Here is your save key. Keep it somewhere safe! This is how you can load a game later on.
             </p>
             <pre ref={keyRef} onClick={handleKeyClick} style={{ cursor: 'pointer', backgroundColor: '#f8f9fa', padding: '10px', borderRadius: '5px' }}>
