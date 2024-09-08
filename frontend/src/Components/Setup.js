@@ -20,12 +20,12 @@ const Setup = ({ onSubmit }) => {
 
     return (
         <div className='container flex-column'
-        style={{ height: '90%', width: '90%', 
+        style={{ height: '100%', width: '90%', 
             justifyContent: 'center', alignItems: 'center',
-            gap: '2%'
+            gap: '2%', 
         }}>
 
-            <div className='container flex-column' style={{width: '75%'}}>
+            <div className='container flex-column' style={{width: '75%', margin: '3%'}}>
                 <h1 className='text setup-input-header'>Choose a theme for your story :</h1>
                 <input className='setup-input'
                     type='text'
@@ -35,7 +35,7 @@ const Setup = ({ onSubmit }) => {
                 />
             </div>
 
-            <div className='container flex-column' style={{width: '75%'}}>
+            <div className='container flex-column' style={{width: '75%', margin: '3%'}}>
                 <h1 className='text setup-input-header'>and a timeframe :</h1>
                 <input className='setup-input'
                     type='text'
@@ -45,7 +45,7 @@ const Setup = ({ onSubmit }) => {
                 />
             </div>
 
-            <div className='container flex-column' style={{width: '75%'}}>
+            <div className='container flex-column' style={{width: '75%', margin: '3%'}}>
                 <h1 className='text setup-input-header'>any added details to include ?</h1>
                 <input className='setup-input'
                     type='text'

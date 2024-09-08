@@ -4,12 +4,18 @@
 
 :root {
   --background-color: #1d1d1d;
+  --background-color-rgb: 29, 29, 29;
+  --edge-opacity: 0.5;
   --text-color: #e3e9f5;
+  --user-text-color: #a9a9a9;
   --modal-background-color: #c8c8c8;
+  --main-game-width: 60%;
 }
 
 .App {
   text-align: center;
+  width: 100%;
+  border: 0px solid white;
 }
 
 html, body {
@@ -24,6 +30,10 @@ html, body {
 
 .text {
   color: var(--text-color);
+}
+
+.user-text {
+  color: var(--user-text-color);
 }
 
 
@@ -89,6 +99,19 @@ html, body {
   user-select: none;
 }
 
+.user-input {
+  background-color: (var(--background-color-rgb), var(--edge-opacity));
+  border: none; /* Remove default borders */
+  padding: 5px 0; /* Add some padding */
+  outline: none; /* Remove default outline */
+  width: var(--main-game-width); /* Full width */
+  box-sizing: border-box; /* Include padding and border in element's total width and height */
+  font-size: calc(1rem + .5vw); /* Relative font size */
+  font-family: 'Handjet', sans-serif;
+  text-align: left;
+
+}
+
 /* text */
 
 .header {
@@ -101,6 +124,12 @@ html, body {
   user-select: none;
 }
 
+.paragraphs {
+  font-size: calc(1rem + .5vw); /* Relative font size */
+  user-select: none;
+  line-height: 1.3;
+}
+
 
 
 /* containers */
@@ -108,6 +137,8 @@ html, body {
 .container {
   border: 0px solid #e3e9f5;
   box-sizing: border-box;
+  padding-left: 0%;
+  padding-right: 0%;
 }
 
 .flex-column {
@@ -122,6 +153,36 @@ html, body {
   flex-direction: row;
   align-items: center;
   justify-content: center;
+}
+
+/* for both the title and the user input - at the top and bottom */
+.edge-container {
+  position: fixed;
+  left: 0;
+  width: 100%;
+  z-index: 1000;
+  padding: 20px;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  border: 0px solid #e3e9f5;
+  background-color: rgba(var(--background-color-rgb), var(--edge-opacity)); 
+  box-shadow: 0 0 5px 10px rgba(var(--background-color-rgb), var(--edge-opacity));
+  padding: 0%;
+}
+
+.header-container {
+  top: 0;
+  padding-top: 2%;
+}
+
+.footer-container {
+  bottom: 0;
+  padding-bottom: 3%; 
+}
+
+.main-game {
+  width: var(--main-game-width);
 }
 
 

@@ -24,20 +24,27 @@ const NewGame = () => {
 
     const [setupComplete, setSetupComplete] = useState(false);
 
+    const [devMode, setDevMode] = useState('true');
+
 
     useEffect(() => {
         // we need to make an api call to the backend to get a new game key
 
-        axios.post('/games/initialize_game_key/')
-        .then(response => {
-            console.log('response:', response.data);
-            setSaveKey(response.data.save_key);
-            setGameId(response.data.game_id);
-        })
-        .catch(error => {
-            console.log('Error:', error);
-        });
-        
+        const initializeGameKey = async () => {
+
+            try {
+                const response = await axios.post('/games/initialize_game_key/',
+                    { dev: devMode }
+                );
+                setSaveKey(response.data.save_key);
+                setGameId(response.data.game_id);
+            }
+            catch (error) {
+                console.log('Error:', error);
+            }
+        };
+
+        initializeGameKey();
 
     }, []);
     
@@ -53,8 +60,9 @@ const NewGame = () => {
     return (
     <div className='container flex-column'
         style={{ justifyContent: 'center', alignItems: 'center',
-                height: '90%', width: '80%',
-                border: '1px white solid',
+                height: '100%', 
+                width: '100%',
+                minWidth: '100%',
         }}>
 
         

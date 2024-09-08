@@ -17,7 +17,13 @@ function App() {
     <div className="App">
 
       <div className='container flex-column' 
-        style={{ height: '100vh' }}>
+        style={{ 
+          height: '100%',
+          width: '100%',
+          minWidth: '100%',
+          paddingTop: '7%', paddingBottom: '5%',
+          overflow: 'auto',
+         }}>
 
         {currentPage === 'Home' && 
         <Home

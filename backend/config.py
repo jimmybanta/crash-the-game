@@ -67,3 +67,7 @@ file_save = {
     'path': set_value('FILE_SAVE_PATH'),
     'max_size': int(set_value('MAX_FILE_SIZE'))
 }
+
+game_intro = {
+    'path': set_value('GAME_INTRO_PATH')
+}

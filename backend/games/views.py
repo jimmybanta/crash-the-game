@@ -5,6 +5,7 @@ from rest_framework.decorators import api_view
 
 import time
 from uuid import uuid4
+import json
 
 import config
 
@@ -24,6 +25,13 @@ def initialize_game_key(request):
     '''
     Creates a game, and a unique UUID for it, then returns the key for the user to have. 
     '''
+
+    dev = request.data['dev']
+    if dev == 'true':
+        time.sleep(1)
+        return JsonResponse({
+            'save_key': '3edd17c8-c7ef-4cf6-89c1-636985c639bb', 
+            'game_id': 142})
 
     # generate a new key
     save_key = uuid4()
@@ -51,6 +59,11 @@ def initialize_game_title(request):
     timeframe = request.data['timeframe']
     details = request.data['details']
 
+    dev = request.data['dev']
+    if dev == 'true':
+        time.sleep(2)
+        return JsonResponse({'title': "The Curious Encounter of Baggins and Bigfoot"})
+
     # generate the title
     title = create_scenario_title(theme=theme, timeframe=timeframe, details=details)
 
@@ -75,8 +88,25 @@ def initialize_game_crash(request):
     Given a game (which should now have a theme, details, and a title), 
     generates a crash scenario, to be sent back to the frontend.
     '''
+
+    # wait a couple seconds, to let the player read the title
+    time.sleep(2)
     
     game_id = request.data['game_id']
+
+
+    dev = request.data['dev']
+    if dev == 'true':
+        time.sleep(3)
+        with open('/Users/jimbo/Documents/coding/projects/survival-game/backend/game_files/142/full_text/0.json', 'r') as f:
+            data = json.load(f)
+
+            def generate_response():
+                for char in data[1]['text']:
+                    time.sleep(0.001)
+                    yield char
+
+            return StreamingHttpResponse(generate_response(), content_type='text/plain')
 
     # get the game
     game = Game.objects.get(id=game_id)
@@ -111,6 +141,18 @@ def initialize_game_wakeup(request):
     
     game_id = request.data['game_id']
     crash_story = request.data['crash_story']
+
+    dev = request.data['dev']
+    if dev == 'true':
+        def generate_response():
+            with open('/Users/jimbo/Documents/coding/projects/survival-game/backend/game_files/142/full_text/0.json', 'r') as f:
+                data = json.load(f)
+
+                for char in data[2]['text']:
+                    time.sleep(0.001)
+                    yield char
+        return StreamingHttpResponse(generate_response(), content_type='text/plain')
+
 
     game = Game.objects.get(id=game_id)
 
@@ -194,3 +236,43 @@ def initialize_game_wakeup(request):
     response = StreamingHttpResponse(generate_response(), content_type='text/plain')
 
     return response
+
+
+@csrf_exempt
+@api_view(['POST'])
+def initialize_game_intro(request):
+    '''
+    Returns the game intro to the player.
+    '''
+
+    game_id = request.data['game_id']
+
+    game = Game.objects.get(id=game_id)
+
+    # get the game characters
+    characters = game.characters.all()
+
+    # get their names
+    character_names = [character.name.split()[0] for character in characters]
+
+    # get the game intro
+    intro = f'''{character_names[0]}, {character_names[1]}, and {character_names[2]} need your help!
+They're lost in a strange world, the unwitting and unwilling heroes of a story that they didn't want to be a part of.
+Now you - that's right, YOU - need to guide them through that story.
+
+Think of yourself as an angel (or devil), sitting on their shoulders, whispering in their ears.
+Each turn, you'll make suggestions and interact with your characters.
+
+Speaking of the characters - on the right -> of the screen, you can see more info about your characters - their histories, personalities, skills.
+Be creative, be bold, be kind, be cruel. Do whatever you like - the world is your oyster!
+
+So - what will you do next?'''
+    
+    # stream back the response
+    def generate_response():
+        for chunk in intro:
+            time.sleep(0.0005)
+            yield chunk
+
+
+    return StreamingHttpResponse(generate_response(), content_type='text/plain')
