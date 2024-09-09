@@ -35,7 +35,6 @@ const CharactersModal = ({ toggle, characters, skillDescriptions }) => {
 
 
     const toggleTooltip = (characterId, skill) => {
-        console.log(skillDescriptions);
         let tempTooltipOpen = {...tooltipOpen};
         tempTooltipOpen[characterId][skill] = !tempTooltipOpen[characterId][skill];
         setTooltipOpen(tempTooltipOpen);
@@ -115,8 +114,16 @@ const CharactersModal = ({ toggle, characters, skillDescriptions }) => {
         let characterSkillDescriptions = {};
 
         skillDescriptions.forEach((skill) => {
+            // capitalize each word in skill.name
+            const tempName = skill.name.split(' ').map((word) => {
+                return word.charAt(0).toUpperCase() + word.slice(1);
+            }).join(' ');
+
             if (skill.name in skills) {
                 characterSkillDescriptions[skill.name] = skill.description;
+            }
+            else if (tempName in skills) {
+                characterSkillDescriptions[tempName] = skill.description;
             }
         });
 

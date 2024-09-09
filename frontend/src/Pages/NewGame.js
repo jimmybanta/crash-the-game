@@ -78,12 +78,12 @@ const NewGame = () => {
             {/* if we have the game key, then render the game */}
             { setupComplete && saveKey && 
             <Game 
+                gameContext={'newGame'}
                 theme={theme}
                 timeframe={timeframe}
                 details={details}
                 saveKey={saveKey}
                 gameId={gameId}
-                newGame={true}
                 devMode={devMode}
             />}
          

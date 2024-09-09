@@ -2,15 +2,18 @@ import { React, useState, useEffect } from 'react';
 
 
 
-const UserText = ({ gameIntro, onSubmit, onKeyClick, onCharactersClick }) => {
+const Footer = ({ gameContext, onSubmit, onKeyClick, onCharactersClick }) => {
     // basically a footer, the place where the user can type in their text
 
     const [inputValue, setInputValue] = useState('');
 
     let placeholder = 'type here...';
 
-    if (gameIntro) {
+    if (gameContext === 'gameIntro') {
         placeholder = "type 'continue', then press enter...";
+    }
+    else if (gameContext === 'gameLoaded') {
+        placeholder = 'welcome back! what would you like to do next?';
     }
     else {
         placeholder = 'what do you want to do?';
@@ -27,7 +30,7 @@ const UserText = ({ gameIntro, onSubmit, onKeyClick, onCharactersClick }) => {
 
     const renderButtons = () => {
 
-        if (!gameIntro) {
+        if (gameContext === 'gamePlay' || gameContext === 'gameLoaded') {
             return (
                 <div>
                     <button 
@@ -75,4 +78,4 @@ const UserText = ({ gameIntro, onSubmit, onKeyClick, onCharactersClick }) => {
 
 };
 
-export default UserText;
+export default Footer;

@@ -15,7 +15,8 @@
 
 .App {
   text-align: center;
-  width: 100%;
+  min-width: 100%;
+  min-height: 100%;
   border: 0px solid white;
 }
 
@@ -242,4 +243,18 @@ html, body {
   60% {
     opacity: 0;
   }
+}
+
+/* auto-scroll */
+
+.auto-scroll {
+  position: absolute;
+
+  top: 10px;
+  /* Without this, the button will be aligned to the top of the page
+  instead of bottom of navbar when scrolled */
+  scroll-margin-top: 100px;
+
+  bottom: 10px;
+  scroll-margin-bottom: 100px;
 }

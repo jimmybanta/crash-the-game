@@ -3,21 +3,42 @@ import { React, useState, useEffect } from 'react';
 import { ReactTyped } from 'react-typed';
 
 
-const TextBox = ({ writer, text, temp }) => {
+const TextBox = ({ gameContext, writer, text }) => {
+
+    // there are three options for writer
+    // 'human' - the user
+    // 'ai' - the AI
+    // 'intro' - the intro text
 
     //const [showArrow, setShowArrow] = useState(false);
     const [collapsed, setCollapsed] = useState(false);
 
-    const [italicize, setItalicize] = useState(writer === 'human' || writer === 'game_intro' ? true : false);
+    const [italicize, setItalicize] = useState((writer === 'ai') ? false : true);
     
 
     // if the text starts with '<i>', then italicize it
     useEffect(() => {
-        if (text.startsWith('<i>')) {
-            text = text.slice(3);
-            setItalicize(true);
-        };
+        try {
+            if (text.startsWith('<i>')) {
+                text = text.slice(3);
+                setItalicize(true);
+            };
+        }
+        catch (error) {
+            console.log('Error:', error);
+            console.log('Text:', text);
+        }
     }, [text]);
+
+    useEffect(() => {
+        // if we're in the gameLoaded phase, then collapse all the AI & intro text
+
+        if (gameContext === 'gameLoaded' || gameContext === 'loadGame') {
+            if (writer === 'ai' || writer === 'intro') {
+                setCollapsed(true);
+            }
+        }
+    }, [gameContext]);
 
 
     /* useEffect(() => {
@@ -70,7 +91,7 @@ const TextBox = ({ writer, text, temp }) => {
     return (
         <div className='container text paragraphs'
             style={{ 
-                textAlign: writer === 'ai' || writer === 'game_intro' ? 'left' : 'right',
+                textAlign: (writer === 'ai' || writer === 'intro') ? 'left' : 'right',
                 whiteSpace: 'pre-wrap', position: 'relative',
                 cursor: 'pointer',
                 marginBottom: '5%',

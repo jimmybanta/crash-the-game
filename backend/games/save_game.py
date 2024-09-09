@@ -6,6 +6,7 @@ import json
 import os
 
 from games.models import Game
+from games.load_game import load_file
 
 
 def save_file(filepath, data):
@@ -20,18 +21,6 @@ def save_file(filepath, data):
             json.dump(data, f, indent=4)
 
 
-
-def load_file(filepath):
-    '''
-    Loads a file from the system.
-    '''
-
-    # TO DO - connect to s3, for stag and prod
-
-    if config.ENV == 'DEV':
-        with open(filepath, 'r') as f:
-            return json.load(f)
-    
 
 def save_text(game_id, text, writer='ai', type='full_text'):
     '''
@@ -76,11 +65,3 @@ def save_text(game_id, text, writer='ai', type='full_text'):
     
     
     
-    
-
-
-
-
-
-    pass
-

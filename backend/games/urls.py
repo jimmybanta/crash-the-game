@@ -11,10 +11,13 @@ router.register(r'skills', views.SkillViewSet, 'skills')
 
 urlpatterns = [
     path('api/', include(router.urls)),
+    path('check_save_key/', views.check_save_key),
     path('initialize_game_key/', views.initialize_game_key),
     path('initialize_game_title/', views.initialize_game_title),
     path('initialize_game_crash/', views.initialize_game_crash),
     path('initialize_game_wakeup/', views.initialize_game_wakeup),
     path('initialize_game_intro/', views.initialize_game_intro),
     path('main_loop/', views.main_loop),
+    path('load_game_info/', views.load_game_info),
+    path('load_game/', views.load_game),
 ]

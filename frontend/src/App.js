@@ -21,6 +21,7 @@ function App() {
           height: '100%',
           width: '100%',
           minWidth: '100%',
+          minHeight: '100%',
           paddingTop: '7%', paddingBottom: '5%',
           overflow: 'auto',
          }}>

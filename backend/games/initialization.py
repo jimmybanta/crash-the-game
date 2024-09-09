@@ -105,7 +105,9 @@ def create_skills(crash_story, location_description,
                 # if we don't, we'll re-prompt until it gets it right
                 try:
                     name, description = skill.split('--')
-                    name = name.strip().replace('_', ' ').capitalize()
+                    name = name.strip().replace('_', ' ')
+                    # capitalize the first letter of each word
+                    name = ' '.join([word.capitalize() for word in name.split()])
                 except:
                     continue
 
@@ -168,7 +170,10 @@ def create_characters(crash_story, location_description, skills,
                 skills = skills.split(', ')
                 skill_dict = {}
                 for skill in skills:
-                    skill_name, skill_level = skill.split('|')
+                    try:
+                        skill_name, skill_level = skill.split('|')
+                    except:
+                        continue
                     skill_dict[skill_name] = skill_level
                 final_characters.append({
                     'name': name,

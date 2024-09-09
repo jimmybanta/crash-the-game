@@ -20,7 +20,9 @@ from games.gameplay import main_loop
 from prompting import prompt
 
 from games.save_game import save_text
+from games.load_game import load_history
 
+DEV_GAME_ID = 162
 
 # Create your views here.
 
@@ -62,6 +64,22 @@ class SkillViewSet(viewsets.ModelViewSet):
         else:
             return None
 
+@csrf_exempt
+@api_view(['POST'])
+def check_save_key(request):
+    '''
+    Checks if a save key is valid.
+    '''
+
+    save_key = request.data['save_key']
+
+    try:
+        _ = Game.objects.get(save_key=save_key)
+        return JsonResponse({'valid': True})
+    except:
+        return JsonResponse({'valid': False})
+
+
 
 @csrf_exempt
 @api_view(['POST'])
@@ -73,9 +91,11 @@ def initialize_game_key(request):
     dev = request.data['dev']
     if dev == 'true':
         time.sleep(1)
+
+        game = Game.objects.get(id=DEV_GAME_ID)
         return JsonResponse({
-            'save_key': '0a8b6884-3e52-45f9-b560-4ce566200c3d', 
-            'game_id': 140})
+            'save_key': game.save_key, 
+            'game_id': DEV_GAME_ID})
 
     # generate a new key
     save_key = uuid4()
@@ -105,8 +125,9 @@ def initialize_game_title(request):
 
     dev = request.data['dev']
     if dev == 'true':
-        time.sleep(2)
-        return JsonResponse({'title': "The Curious Encounter of Baggins and Bigfoot"})
+        time.sleep(1)
+        game = Game.objects.get(id=DEV_GAME_ID)
+        return JsonResponse({'title': game.title})
 
     # generate the title
     title = create_scenario_title(theme=theme, timeframe=timeframe, details=details)
@@ -118,9 +139,6 @@ def initialize_game_title(request):
     game.starting_details = details
     game.title = title
     game.save()
-
-    # save the title to file
-    save_text(game_id=game_id, text=title, writer='ai')
 
     return JsonResponse({'title': title})
 
@@ -142,11 +160,11 @@ def initialize_game_crash(request):
     dev = request.data['dev']
     if dev == 'true':
         time.sleep(0.5)
-        with open('/Users/jimbo/Documents/coding/projects/survival-game/backend/game_files/142/full_text/0.json', 'r') as f:
+        with open(f'/Users/jimbo/Documents/coding/projects/survival-game/backend/game_files/{DEV_GAME_ID}/full_text/0.json', 'r') as f:
             data = json.load(f)
 
             def generate_response():
-                for char in data[1]['text']:
+                for char in data[0]['text']:
                     time.sleep(0.0001)
                     yield char
 
@@ -189,10 +207,10 @@ def initialize_game_wakeup(request):
     dev = request.data['dev']
     if dev == 'true':
         def generate_response():
-            with open('/Users/jimbo/Documents/coding/projects/survival-game/backend/game_files/142/full_text/0.json', 'r') as f:
+            with open(f'/Users/jimbo/Documents/coding/projects/survival-game/backend/game_files/{DEV_GAME_ID}/full_text/0.json', 'r') as f:
                 data = json.load(f)
 
-                for char in data[2]['text']:
+                for char in data[1]['text']:
                     time.sleep(0.0001)
                     yield char
         return StreamingHttpResponse(generate_response(), content_type='text/plain')
@@ -315,10 +333,13 @@ Click it.
 
 So - what will you do next?'''
     
+    # save the intro to file
+    save_text(game_id=game_id, text=intro, writer='intro')
+    
     # stream back the response
     def generate_response():
         for chunk in intro:
-            time.sleep(0.0005)
+            time.sleep(0.01)
             yield chunk
 
 
@@ -335,27 +356,36 @@ def main_loop(request):
     history = request.data['history']
     user_input = request.data['user_input']
 
-    dev = request.data['dev']
+    # first, save the user input to file
+    save_text(game_id=game_id, text=user_input, writer='human')
+
+    try:
+        dev = request.data['dev']
+    except:
+        dev = 'false'
     if dev == 'true':
         time.sleep(1)
-        with open('/Users/jimbo/Documents/coding/projects/survival-game/backend/game_files/142/full_text/0.json', 'r') as f:
+        with open(f'/Users/jimbo/Documents/coding/projects/survival-game/backend/game_files/{DEV_GAME_ID}/full_text/0.json', 'r') as f:
             data = json.load(f)
 
+            save_text(game_id=game_id, text=data[4]['text'], writer='ai')
+
             def generate_response():
-                for char in data[1]['text']:
-                    time.sleep(0.01)
+                for char in data[4]['text']:
+                    time.sleep(0.001)
                     yield char
 
             return StreamingHttpResponse(generate_response(), content_type='text/plain')
 
     # remove the game intro from the history
-    history = [item for item in history if item['writer'] != 'game_intro']
+    history = [item for item in history if item['writer'] != 'intro']
 
     ## first, add the theme, timeframe, and details to the system prompt
     game = Game.objects.get(id=game_id)
     
-    main_loop_prompt = 'Here are the theme, timeframe, and details of the game:\n'
+    main_loop_prompt = 'Here is the title, theme, timeframe, and details of the game:\n'
 
+    main_loop_prompt += f'Title: {game.title}\n' if game.title else 'There is no specified title.\n'
     main_loop_prompt += f'Theme: {game.theme}\n' if game.theme else 'There is no specified theme.\n'
     main_loop_prompt += f'Timeframe: {game.timeframe}\n' if game.timeframe else 'There is no specified timeframe.\n'
     main_loop_prompt += f'Details: {game.starting_details}\n\n' if game.starting_details else 'There are no specified details.\n\n'
@@ -379,14 +409,15 @@ def main_loop(request):
 
     main_loop_prompt += 'Here is the history of the game thus far:\n\n'
 
-    # add the user input to the history
-    history.append({'writer': 'human', 'text': f'{user_input}. Remember - when in doubt, make something surprising and exciting happen!'})
-
     # add a human message before the crash story
     history.insert(0, {'writer': 'human', 'text': 'Start the story for me - have them crash land.'})
 
     # add a human message before the wakeup story
     history.insert(2, {'writer': 'human', 'text': 'Now tell the story of them waking up in this new, strange place.'})
+
+    # add the user input to the history
+    history.append({'writer': 'human', 'text': f'{user_input}. Remember - when in doubt, make something surprising and exciting happen!'})
+
 
     def generate_response():
         response = ''
@@ -394,14 +425,64 @@ def main_loop(request):
             response += chunk
             yield chunk
         
-        # save the crash story to file
+        # save the response to file
         save_text(game_id=game_id, text=response, writer='ai')
     
     return StreamingHttpResponse(generate_response(), content_type='text/plain')
 
 
+@csrf_exempt
+@api_view(['POST'])
+def load_game_info(request):
+    '''
+    Loads the game info - title, theme, timeframe, and details - for the player.
+    '''
+
+    save_key = request.data['save_key']
+
+    try:
+        game = Game.objects.get(save_key=save_key)
+    except:
+        return JsonResponse({'error': 'Invalid save key.'})
+
+    # get the game info
+    game_info = {
+        'id': game.id,
+        'title': game.title,
+        'theme': game.theme,
+        'timeframe': game.timeframe,
+        'details': game.starting_details
+    }
+
+    return JsonResponse(game_info)
 
 
+@csrf_exempt
+@api_view(['POST'])
+def load_game(request):
+    '''
+    Loads a game from a save key.
+    '''
+
+    time.sleep(2)
+
+    save_key = request.data['save_key']
+
+    game = Game.objects.get(save_key=save_key)
+
+    # load the game history
+    history = load_history(game.id)
+
+    def generate_response():
+        for item in history:
+            time.sleep(0.3)
+            yield json.dumps(item)
+
+    return StreamingHttpResponse(generate_response(), content_type='application/json')
+        
+
+
+    
 
 
 

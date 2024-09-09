@@ -3,13 +3,13 @@ import { ReactTyped } from 'react-typed';
 
 
 
-const Header = ({ newGame, title}) => {
+const Header = ({ gameContext, title}) => {
 
-    // function for rendering the title, based on 
+    // function for rendering the title, based on the game context
     const renderTitle = () => {
 
-        // if this is a new game, then type out the title
-        if (newGame) {
+        // if this is a new game or loading a game, then type out the title
+        if (gameContext === 'newGame' || gameContext === 'loadGame') {
             return (
                     <div className='container'>
                         <div className='text title'>
@@ -23,8 +23,8 @@ const Header = ({ newGame, title}) => {
                 
             );
         } 
-        // if we're not at the start of the game, just render the title
-        else if (!newGame) {
+        // otherwise, just display the title
+        else {
             return (
                 <div className='text title'>
                     {title}
