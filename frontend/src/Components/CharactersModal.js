@@ -135,7 +135,8 @@ const CharactersModal = ({ toggle, characters, skillDescriptions }) => {
                     const tooltipId = `${skill}-${characterId}`.replace(/ /g, '-');
 
                     return (
-                        <div className='modal-text'>
+                        <div className='modal-text'
+                        key={skill}>
 
                             <strong 
                                 id={tooltipId}

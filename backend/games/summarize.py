@@ -20,11 +20,11 @@ and be sure to include them in your summary.\n'''
 
     summary_prompt = f"Summarize the following text in {target_words} words: \n\n {text}"
 
-    summary = prompt(summary_prompt, 
-                     system=system_prompt)
+    summary, cost = prompt(summary_prompt, 
+                        system=system_prompt, stream=False, caching=False)
     
 
-    return summary
+    return summary, cost
 
 
 def fix_summary_history(history):

@@ -140,8 +140,8 @@ def initialize_game_title(request):
         game = Game.objects.get(id=DEV_GAME_ID)
         return JsonResponse({'title': game.title})
 
-    # generate the title
-    title = create_scenario_title(theme=theme, timeframe=timeframe, details=details)
+    # generate the title and the cost to create it
+    title, cost = create_scenario_title(theme=theme, timeframe=timeframe, details=details)
 
     # update the game with this info
     game = Game.objects.get(id=game_id)
@@ -149,6 +149,7 @@ def initialize_game_title(request):
     game.timeframe = timeframe
     game.starting_details = details
     game.title = title
+    game.total_dollar_cost += cost
     game.save()
 
     return JsonResponse({'title': title})
@@ -191,14 +192,23 @@ def initialize_game_crash(request):
         # iterate through the crash story
         for chunk in create_crash(title=game.title, theme=game.theme,
                                 timeframe=game.timeframe, details=game.starting_details):
-            crash_story += chunk
-            yield chunk
+            
+            if chunk['type'] == 'text':
+                crash_story += chunk['text']
+                yield chunk['text']
+            elif chunk['type'] == 'message_stop':
+                # add the cost to generate it
+                cost = chunk['cost']
+                game.total_dollar_cost += cost
         
         # save the crash story to file
         save_text(game_id=game_id, text=crash_story, writer='ai')
 
         # summarize the crash story
-        summary = summarize(crash_story, target_words=config.llm['summarization_target_word_count'])
+        summary, summary_cost = summarize(crash_story, target_words=config.llm['summarization_target_word_count'])
+
+        game.total_dollar_cost += summary_cost
+        game.save()
 
         # save a human message to summary file
         crash_message = 'Start the story for me - have them crash land.'
@@ -241,7 +251,7 @@ def initialize_game_wakeup(request):
     game = Game.objects.get(id=game_id)
 
     # first, we need to generate the starting location description
-    location_name, location_description = create_location(crash_story, title=game.title, theme=game.theme,
+    location_name, location_description, location_cost = create_location(crash_story, title=game.title, theme=game.theme,
                                         timeframe=game.timeframe, details=game.starting_details)
     
     # then, create a new location object
@@ -252,7 +262,7 @@ def initialize_game_wakeup(request):
 
     # add the location to the game
     game.locations.add(location)
-
+    game.total_dollar_cost += location_cost
     game.save()
 
     # save location info to file
@@ -260,7 +270,7 @@ def initialize_game_wakeup(request):
     save_text(game_id=game_id, text=f'Location description: {location_description}', writer='ai', type='initialization')
 
     # now we need to generate skills that match the location/scenario
-    skills, skills_list = create_skills(crash_story, location_description, 
+    skills_str, skills_list, skills_cost = create_skills(crash_story, location_description, 
                             title=game.title, theme=game.theme,
                             timeframe=game.timeframe, details=game.starting_details)
         
@@ -271,14 +281,14 @@ def initialize_game_wakeup(request):
         )
 
         game.skills.add(skill)
-
+    game.total_dollar_cost += skills_cost
     game.save()
 
     # save skills to file
-    save_text(game_id=game_id, text=f'Skills: {skills}', writer='ai', type='initialization')
+    save_text(game_id=game_id, text=f'Skills: {skills_str}', writer='ai', type='initialization')
 
     # now, we need to generate characters that match the location, scenario, and skills
-    characters, characters_list = create_characters(crash_story, location_description, skills,
+    characters_str, characters_list, characters_cost = create_characters(crash_story, location_description, skills_str,
                                                 title=game.title, theme=game.theme,
                                                 timeframe=game.timeframe, details=game.starting_details)
     # characters list is a list of character dicts
@@ -294,10 +304,11 @@ def initialize_game_wakeup(request):
 
         game.characters.add(new_character)
 
+    game.total_dollar_cost += characters_cost
     game.save()
 
     # save characters to file
-    save_text(game_id=game_id, text=f'Characters: {characters}', writer='ai', type='initialization')
+    save_text(game_id=game_id, text=f'Characters: {characters_str}', writer='ai', type='initialization')
 
     # finally, create the wake up scene, and return it to the player
 
@@ -306,17 +317,26 @@ def initialize_game_wakeup(request):
         wakeup_story = ''
 
         # iterate through the wakeup story
-        for chunk in create_wakeup(crash_story, location_description, skills, characters,
+        for chunk in create_wakeup(crash_story, location_description, skills_str, characters_str,
                                 title=game.title, theme=game.theme,
                                 timeframe=game.timeframe, details=game.starting_details):
-            wakeup_story += chunk
-            yield chunk
+            
+            if chunk['type'] == 'text':
+                wakeup_story += chunk['text']
+                yield chunk['text']
+            elif chunk['type'] == 'message_stop':
+                # add the cost to generate it
+                cost = chunk['cost']
+                game.total_dollar_cost += cost
         
         # save the wakeup story to file
         save_text(game_id=game_id, text=wakeup_story, writer='ai')
 
         # summarize the wakeup story
-        summary = summarize(wakeup_story, target_words=config.llm['summarization_target_word_count'])
+        summary, summary_cost = summarize(wakeup_story, target_words=config.llm['summarization_target_word_count'])
+
+        game.total_dollar_cost += summary_cost
+        game.save()
 
         # save a human message to summary file
         wakeup_message = 'Now tell the story of them waking up in this new, strange place.'
@@ -371,7 +391,7 @@ So - what will you do next?'''
     # stream back the response
     def generate_response():
         for chunk in intro:
-            time.sleep(0.01)
+            time.sleep(0.007)
             yield chunk
 
 
@@ -505,6 +525,7 @@ def main_loop(request):
     main_loop_prompt += 'Here are the location name, description, skills, and characters:\n'
     main_loop_prompt += f'{location_name}\n'
     main_loop_prompt += f'{location_description}\n'
+    main_loop_prompt += 'But remember - they may not be in this location anymore. This is just the location where the story started.\n'
     main_loop_prompt += f'{skills}\n'
     main_loop_prompt += f'{characters}\n\n'
 
@@ -530,22 +551,36 @@ The last is the full text. What you output should be more like the full text.\n\
             break
     
     # then, add the user input and some gentle encouragement
-    history.append({'writer': 'human', 'text': f'{user_input}. Remember - when in doubt, make something surprising and exciting happen!'})
+    history.append({'writer': 'human', 
+                    'text': f'''{user_input}.
+Remember - when in doubt, make something surprising and exciting happen!
+Monsters and scary creatures are ok, but drama, funny characters, and bizarre twists are even better!'''})
 
     # check the history, and fix it if necessary
     history_fixed = fix_summary_history(history)
 
     def generate_response():
         response = ''
-        for chunk in prompt(history_fixed, context='main_loop', system=main_loop_prompt, stream=True):
-            response += chunk
-            yield chunk
+        for chunk in prompt(history_fixed, context='main_loop', 
+                            system=main_loop_prompt, stream=True, caching=False):
+            
+            if chunk['type'] == 'text':
+                response += chunk['text']
+                yield chunk['text']
+            elif chunk['type'] == 'message_stop':
+                # add the cost to generate it
+                cost = chunk['cost']
+                game.total_dollar_cost += cost
         
         # save the response to file
         save_text(game_id=game_id, text=response, writer='ai')
 
         # summarize the response
-        summary = summarize(response, target_words=config.llm['summarization_target_word_count'])
+        summary, summary_cost = summarize(response, target_words=config.llm['summarization_target_word_count'])
+
+        game.turns += 1
+        game.total_dollar_cost += summary_cost
+        game.save()
 
         # save it to file
         save_text(game_id=game_id, text=summary, writer='ai', type='summaries')

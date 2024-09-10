@@ -294,6 +294,12 @@ const Game = ( props ) => {
         }
         else {
 
+            // if a response is still streaming in, don't let them submit
+            if (currentStream) {
+                alert('Patience.');
+                return;
+            }
+
             // add the user text to history
             let tempHistory = [...history];
             tempHistory.push({

@@ -40,7 +40,10 @@ class Game(models.Model):
 
     # total_cost keeps track of how much the game has cost to run, from LLM usage
     ## currently not keeping track of this - could do it in the future?
-    #total_dollar_cost = models.FloatField(default=0.0)
+    total_dollar_cost = models.FloatField(default=0.0)
+
+    # turns - the number of turns that have been played in the game
+    turns = models.IntegerField(default=0)
 
     # word count - the total word count of the game
     word_count = models.IntegerField(default=0)
