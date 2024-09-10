@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-const BASE_URL = 'http://127.0.0.1:8000/';
-
+import { BASE_URL } from './BaseUrl';
+  
 axios.defaults.baseURL = BASE_URL;
 
 axios.interceptors.request.use(request => {
@@ -15,6 +15,3 @@ axios.interceptors.request.use(request => {
     return Promise.reject(error);
   }
 );
-
-
-export { BASE_URL };

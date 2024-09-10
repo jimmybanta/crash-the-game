@@ -44,7 +44,7 @@ const Footer = ({ gameContext, onSubmit, onKeyClick, onCharactersClick }) => {
                     style={{ 
                         position: 'absolute', bottom: '20px', right: '20px' }}
                     onClick={onKeyClick}>
-                        Key
+                        Save Key
                     </button>
                 </div>
             )

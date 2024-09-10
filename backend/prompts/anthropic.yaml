@@ -19,6 +19,7 @@ create_crash: >
   Three characters - they haven't been created yet, so don't mention anything specific about them, but you can allude to them - 
   are on some kind of vehicle - could be an old sailboat in the 1500's, could be a luxury jet, could be a spaceship, could be 
   a mythical bird they caught (remember, keep it funny and interesting) - and they crash land in a mysterious place.
+  Take note of the timeframe - if they're in the 1500's, they won't be in a spaceship. Keep their vehicle in line with the timeframe.
   This part is just the story of them crashing - don't include them waking up in the strange place.
   Keep it exciting and interesting - but not too long. This should end with the vehicle crashing and going down, and everything going black.
   Write the crash landing scenario below - and keep it brief, between 200 and 400 words. Don't include any kind of intro or preface - 
@@ -90,7 +91,14 @@ create_wakeup: >
 
 
 main_loop: >
-  Now, the player is playing the game. You'll be given the location, characters, and a history
+  Now, the player is playing the game. You'll be given the location, characters, skills, and a history
   of what has happened so far. Then, the player will say what they want to do in the story -
   respond with what happens as a result of what they've chosen.
   Keep in interesting, exciting, and fun - and keep the player engaged.
+  Be sure not to repeat yourself - if something has already been said in the game history, you don't need to necessarily say it again.
+  Don't end it by addressing the player, or by talking about the mysteries of the game - just keep it in the moment.
+  Be creative - create interesting new characters for them to interact with, create cool new locations for them to explore.
+  Create drama, not just action.
+  Try to keep it between 150 - 250 words.
+  
+  

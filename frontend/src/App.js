@@ -8,8 +8,10 @@ import About from './Pages/About';
 import NewGame from './Pages/NewGame';
 import LoadGame from './Pages/LoadGame';
 
+// our main app
 function App() {
 
+  // current page state
   const [currentPage, setCurrentPage] = useState('Home');
 
 
@@ -31,11 +33,17 @@ function App() {
         onSetCurrentPage={(page) => setCurrentPage(page)}
         />}
         {currentPage === 'NewGame' &&
-          <NewGame />}
+          <NewGame 
+          onSetCurrentPage={(page) => setCurrentPage(page)}
+          />}
         {currentPage === 'LoadGame' &&
-          <LoadGame />}
+          <LoadGame 
+          onSetCurrentPage={(page) => setCurrentPage(page)}
+          />}
         {currentPage === 'About' &&
-          <About />}
+          <About 
+          onSetCurrentPage={(page) => setCurrentPage(page)}
+          />}
     
       </div>
       

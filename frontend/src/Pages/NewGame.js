@@ -2,7 +2,7 @@
 import { React, useEffect, useState } from 'react';
 import axios from 'axios';
 
-import { BASE_URL } from '../interceptors';
+import { BASE_URL } from '../BaseUrl';
 
 import Setup from '../Components/Setup';
 import Loading from '../Components/Loading';
@@ -13,7 +13,7 @@ axios.defaults.baseURL = BASE_URL;
 
 
 
-const NewGame = () => {
+const NewGame = ({ onSetCurrentPage }) => {
 
     const [saveKey, setSaveKey] = useState('');
     const [gameId, setGameId] = useState(null);
@@ -68,8 +68,10 @@ const NewGame = () => {
         
             {/* if we haven't setup yet, then render setup
             otherwise, render the main game */}
-            { !setupComplete && <Setup onSubmit={(theme, timeframe, details) => 
-                                                handleSetup(theme, timeframe, details)} />}
+            { !setupComplete && <Setup 
+            onSetCurrentPage={(page) => onSetCurrentPage(page)}
+            onSubmit={(theme, timeframe, details) => 
+            handleSetup(theme, timeframe, details)} />}
 
             {/* if we have set up, but don't have the game key yet
             then render loading */}

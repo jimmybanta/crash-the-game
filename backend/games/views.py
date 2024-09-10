@@ -14,13 +14,14 @@ import config
 from games.serializers import CharacterSerializer, SkillSerializer
 
 from games.models import Game, Location, Character, Skill
+
 from games.initialization import create_scenario_title, create_crash, create_location, create_skills, create_characters, create_wakeup
-from games.gameplay import main_loop
+from games.summarize import summarize, fix_summary_history
+from games.save_game import save_text
+from games.load_game import load_history, load_history_summary, load_latest_file
 
 from prompting import prompt
 
-from games.save_game import save_text
-from games.load_game import load_history
 
 DEV_GAME_ID = 162
 
@@ -63,6 +64,16 @@ class SkillViewSet(viewsets.ModelViewSet):
         
         else:
             return None
+
+@csrf_exempt
+@api_view(['GET'])
+def get_current_version(request):
+    '''
+    Returns the version of the game.
+    '''
+
+    return JsonResponse({'version': config.game_version['version']})
+
 
 @csrf_exempt
 @api_view(['POST'])
@@ -186,6 +197,17 @@ def initialize_game_crash(request):
         # save the crash story to file
         save_text(game_id=game_id, text=crash_story, writer='ai')
 
+        # summarize the crash story
+        summary = summarize(crash_story, target_words=config.llm['summarization_target_word_count'])
+
+        # save a human message to summary file
+        crash_message = 'Start the story for me - have them crash land.'
+        save_text(game_id=game_id, text=crash_message, writer='human', type='summaries')
+
+        # save the summary to file
+        save_text(game_id=game_id, text=summary, writer='ai', type='summaries')
+
+
 
     # generate the crash and return it as a streaming response
     response = StreamingHttpResponse(generate_response(), content_type='text/plain')
@@ -283,15 +305,25 @@ def initialize_game_wakeup(request):
     def generate_response():
         wakeup_story = ''
 
-        # iterate through the crash story
+        # iterate through the wakeup story
         for chunk in create_wakeup(crash_story, location_description, skills, characters,
                                 title=game.title, theme=game.theme,
                                 timeframe=game.timeframe, details=game.starting_details):
             wakeup_story += chunk
             yield chunk
         
-        # save the crash story to file
+        # save the wakeup story to file
         save_text(game_id=game_id, text=wakeup_story, writer='ai')
+
+        # summarize the wakeup story
+        summary = summarize(wakeup_story, target_words=config.llm['summarization_target_word_count'])
+
+        # save a human message to summary file
+        wakeup_message = 'Now tell the story of them waking up in this new, strange place.'
+        save_text(game_id=game_id, text=wakeup_message, writer='human', type='summaries')
+
+        # then save the summary to file
+        save_text(game_id=game_id, text=summary, writer='ai', type='summaries')
 
 
     # generate the crash and return it as a streaming response
@@ -328,7 +360,7 @@ Each turn, you'll make suggestions and interact with your characters.
 Speaking of the characters - on the right -> of the screen, you can see more info about your characters - their histories, personalities, skills.
 Be creative, be bold, be kind, be cruel. Do whatever you like - the world is your oyster!
 
-Speaking of the right of the screen - in the bottom right you should see a button that says 'Key'. 
+Speaking of the right of the screen - in the bottom right you should see a button that says 'Save Key'. 
 Click it.
 
 So - what will you do next?'''
@@ -343,91 +375,6 @@ So - what will you do next?'''
             yield chunk
 
 
-    return StreamingHttpResponse(generate_response(), content_type='text/plain')
-
-@csrf_exempt
-@api_view(['POST'])
-def main_loop(request):
-    '''
-    The main loop of the game.
-    '''
-
-    game_id = request.data['game_id']
-    history = request.data['history']
-    user_input = request.data['user_input']
-
-    # first, save the user input to file
-    save_text(game_id=game_id, text=user_input, writer='human')
-
-    try:
-        dev = request.data['dev']
-    except:
-        dev = 'false'
-    if dev == 'true':
-        time.sleep(1)
-        with open(f'/Users/jimbo/Documents/coding/projects/survival-game/backend/game_files/{DEV_GAME_ID}/full_text/0.json', 'r') as f:
-            data = json.load(f)
-
-            save_text(game_id=game_id, text=data[4]['text'], writer='ai')
-
-            def generate_response():
-                for char in data[4]['text']:
-                    time.sleep(0.001)
-                    yield char
-
-            return StreamingHttpResponse(generate_response(), content_type='text/plain')
-
-    # remove the game intro from the history
-    history = [item for item in history if item['writer'] != 'intro']
-
-    ## first, add the theme, timeframe, and details to the system prompt
-    game = Game.objects.get(id=game_id)
-    
-    main_loop_prompt = 'Here is the title, theme, timeframe, and details of the game:\n'
-
-    main_loop_prompt += f'Title: {game.title}\n' if game.title else 'There is no specified title.\n'
-    main_loop_prompt += f'Theme: {game.theme}\n' if game.theme else 'There is no specified theme.\n'
-    main_loop_prompt += f'Timeframe: {game.timeframe}\n' if game.timeframe else 'There is no specified timeframe.\n'
-    main_loop_prompt += f'Details: {game.starting_details}\n\n' if game.starting_details else 'There are no specified details.\n\n'
-
-    ## then, add the location, skills, and characters to the system prompt
-    game_initialization_path = f'{config.file_save["path"]}/{game_id}/initialization/0.json'
-
-    with open(game_initialization_path, 'r') as f:
-        data = json.load(f)
-
-    location_name = data[0]['text']
-    location_description = data[1]['text']
-    skills = data[2]['text']
-    characters = data[3]['text']
-
-    main_loop_prompt += 'Here are the location name, description, skills, and characters:\n'
-    main_loop_prompt += f'{location_name}\n'
-    main_loop_prompt += f'{location_description}\n'
-    main_loop_prompt += f'{skills}\n'
-    main_loop_prompt += f'{characters}\n\n'
-
-    main_loop_prompt += 'Here is the history of the game thus far:\n\n'
-
-    # add a human message before the crash story
-    history.insert(0, {'writer': 'human', 'text': 'Start the story for me - have them crash land.'})
-
-    # add a human message before the wakeup story
-    history.insert(2, {'writer': 'human', 'text': 'Now tell the story of them waking up in this new, strange place.'})
-
-    # add the user input to the history
-    history.append({'writer': 'human', 'text': f'{user_input}. Remember - when in doubt, make something surprising and exciting happen!'})
-
-
-    def generate_response():
-        response = ''
-        for chunk in prompt(history, context='main_loop', system=main_loop_prompt, stream=True):
-            response += chunk
-            yield chunk
-        
-        # save the response to file
-        save_text(game_id=game_id, text=response, writer='ai')
-    
     return StreamingHttpResponse(generate_response(), content_type='text/plain')
 
 
@@ -480,6 +427,132 @@ def load_game(request):
 
     return StreamingHttpResponse(generate_response(), content_type='application/json')
         
+
+@csrf_exempt
+@api_view(['POST'])
+def main_loop(request):
+    '''
+    The main loop of the game.
+    '''
+
+    game_id = request.data['game_id']
+    user_input = request.data['user_input']
+    # frontend history - all the text displayed in the frontend
+    ## includes the crash story, wakeup story, game intro, then all user input and AI responses
+    ## ends in the current user input
+    frontend_history = request.data['history']
+
+    # first, check to see if the last item in summaries/full text is a user message
+    ## if it is, then remove it
+    ## something probably went wrong, preventing the AI from responding to it
+    full_text = load_latest_file(game_id, type='full_text')
+    summaries = load_latest_file(game_id, type='summaries')
+
+    if full_text[-1]['writer'] == 'human':
+        print('removing last human message')
+        full_text = full_text[:-1]
+        save_text(game_id=game_id, text=full_text, writer='ai', save_type='overwrite')
+    
+    if summaries[-1]['writer'] == 'human':
+        print('removing last human message')
+        summaries = summaries[:-1]
+        save_text(game_id=game_id, text=summaries, writer='ai', save_type='overwrite', type='summaries')
+
+
+    # then, save the user input to both the full text and summary files
+    save_text(game_id=game_id, text=user_input, writer='human', type='full_text')
+    save_text(game_id=game_id, text=user_input, writer='human', type='summaries')
+
+    try:
+        dev = request.data['dev']
+    except:
+        dev = 'false'
+    if dev == 'true':
+        time.sleep(1)
+        with open(f'/Users/jimbo/Documents/coding/projects/survival-game/backend/game_files/{DEV_GAME_ID}/full_text/0.json', 'r') as f:
+            data = json.load(f)
+
+            save_text(game_id=game_id, text=data[4]['text'], writer='ai')
+
+            def generate_response():
+                for char in data[4]['text']:
+                    time.sleep(0.001)
+                    yield char
+
+            return StreamingHttpResponse(generate_response(), content_type='text/plain')
+
+    ## first, add the theme, timeframe, and details to the system prompt
+    game = Game.objects.get(id=game_id)
+    
+    main_loop_prompt = 'Here is the title, theme, timeframe, and details of the game:\n'
+
+    main_loop_prompt += f'Title: {game.title}\n' if game.title else 'There is no specified title.\n'
+    main_loop_prompt += f'Theme: {game.theme}\n' if game.theme else 'There is no specified theme.\n'
+    main_loop_prompt += f'Timeframe: {game.timeframe}\n' if game.timeframe else 'There is no specified timeframe.\n'
+    main_loop_prompt += f'Details: {game.starting_details}\n\n' if game.starting_details else 'There are no specified details.\n\n'
+
+    ## then, add the location, skills, and characters to the system prompt
+    game_initialization_path = f'{config.file_save["path"]}/{game_id}/initialization/0.json'
+
+    with open(game_initialization_path, 'r') as f:
+        data = json.load(f)
+
+    location_name = data[0]['text']
+    location_description = data[1]['text']
+    skills = data[2]['text']
+    characters = data[3]['text']
+
+    main_loop_prompt += 'Here are the location name, description, skills, and characters:\n'
+    main_loop_prompt += f'{location_name}\n'
+    main_loop_prompt += f'{location_description}\n'
+    main_loop_prompt += f'{skills}\n'
+    main_loop_prompt += f'{characters}\n\n'
+
+    ## now, add the history
+    main_loop_prompt += '''Here is the history of the game thus far:
+Each of these, except for the last, is a summary of what happened.
+The last is the full text. What you output should be more like the full text.\n\n'''
+
+    history = load_history_summary(game_id)
+
+    # remove the last human message
+    if history[-1]['writer'] == 'human':
+        history = history[:-1]
+    
+    # remove the last AI message
+    if history[-1]['writer'] == 'ai':
+        history = history[:-1]
+
+    # add the last full text AI response
+    for item in frontend_history[::-1]:
+        if item['writer'] == 'ai':
+            history.append(item)
+            break
+    
+    # then, add the user input and some gentle encouragement
+    history.append({'writer': 'human', 'text': f'{user_input}. Remember - when in doubt, make something surprising and exciting happen!'})
+
+    # check the history, and fix it if necessary
+    history_fixed = fix_summary_history(history)
+
+    def generate_response():
+        response = ''
+        for chunk in prompt(history_fixed, context='main_loop', system=main_loop_prompt, stream=True):
+            response += chunk
+            yield chunk
+        
+        # save the response to file
+        save_text(game_id=game_id, text=response, writer='ai')
+
+        # summarize the response
+        summary = summarize(response, target_words=config.llm['summarization_target_word_count'])
+
+        # save it to file
+        save_text(game_id=game_id, text=summary, writer='ai', type='summaries')
+
+    
+    return StreamingHttpResponse(generate_response(), content_type='text/plain')
+
 
 
     

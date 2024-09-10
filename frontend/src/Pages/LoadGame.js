@@ -1,7 +1,7 @@
 import { React, useEffect, useState } from 'react';
 import axios from 'axios';
 
-import { BASE_URL } from '../interceptors';
+import { BASE_URL } from '../BaseUrl';
 
 import { generateStream } from '../streaming';
 
@@ -12,7 +12,7 @@ axios.defaults.baseURL = BASE_URL;
 
 
 
-const LoadGame = () => {
+const LoadGame = ({ onSetCurrentPage }) => {
     // component that prompts the user for their save key
     // when they do that, 
 
@@ -27,7 +27,7 @@ const LoadGame = () => {
 
     const [keyInput, setKeyInput] = useState(false);
 
-    const [devMode, setDevMode] = useState('true');
+    const [devMode, setDevMode] = useState('false');
 
 
     const handleKeyCheck = async () => {
@@ -91,12 +91,18 @@ const LoadGame = () => {
                         textAlign: 'center',
                     }}/>
 
-                <button
+                <div
                     className='button home-button text'
                     style={{ marginTop: '3%'}}
                     onClick={() => handleKeyCheck()}>
                     Load Game
-                </button>
+                </div>
+                <div
+                    className='button back-button text'
+                    style={{ marginTop: '7%'}}
+                    onClick={() => onSetCurrentPage('Home')}>
+                    Back
+                </div>
             </div>
         )
 

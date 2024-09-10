@@ -22,7 +22,9 @@ def save_file(filepath, data):
 
 
 
-def save_text(game_id, text, writer='ai', type='full_text'):
+def save_text(game_id, text, writer='ai', 
+              save_type='append',
+              type='full_text'):
     '''
     Saves text of a game to the system.
 
@@ -55,9 +57,13 @@ def save_text(game_id, text, writer='ai', type='full_text'):
             # read the file
             data = load_file(f'{file_save_path}/{file_num}.json')
     
-    data.append({'writer': writer, 'text': text})
+    if save_type == 'append':
+        data.append({'writer': writer, 'text': text})
+    elif save_type == 'overwrite':
+        data = text
 
     # save the file
+    
     save_file(f'{file_save_path}/{file_num}.json', data)
 
     

@@ -3,8 +3,12 @@
 const BASE_URL = 'http://127.0.0.1:8000';
 
 
+// functions for streaming data from the server
+// for use when the server returns a StreamingHttpResponse
 
+// generateStream takes a url and data and returns an async generator
 export const generateStream = async (url, data)  => {
+    // fetch data from the server
     const response = await fetch(
         BASE_URL + url,
         {
@@ -22,6 +26,7 @@ export const generateStream = async (url, data)  => {
   }
   
 
+// getIterableStream takes a response body and returns an async generator
 export async function* getIterableStream(body) {
     const reader = body.getReader()
     const decoder = new TextDecoder()

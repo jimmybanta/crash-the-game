@@ -4,7 +4,7 @@ import { React, useState } from 'react';
 
 
 // A component that will be used to set up a new game.
-const Setup = ({ onSubmit }) => {
+const Setup = ({ onSetCurrentPage, onSubmit }) => {
 
     const [theme, setTheme] = useState('');
     const [timeframe, setTimeframe] = useState('');
@@ -60,6 +60,13 @@ const Setup = ({ onSubmit }) => {
             style={{marginTop: '3%'}}
             onClick={() => handleSubmit()}>
                 Let's Play!
+            </div>
+
+            <div 
+            className='button back-button text'
+            style={{marginTop: '3%'}}
+            onClick={() => onSetCurrentPage('Home')}>
+                Back
             </div>
         </div>
     )

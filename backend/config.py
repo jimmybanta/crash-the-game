@@ -1,5 +1,5 @@
+''' Configuration settings for the application. '''
 
-import json
 import os
 import dotenv
 
@@ -10,6 +10,9 @@ dotenv.load_dotenv()
 
 # set environment
 ENV = os.getenv('ENV')
+
+if not ENV:
+    raise ValueError('Environment not set.')
 
 
 # helper functions
@@ -30,7 +33,7 @@ def set_value(name, decrypt=False, env=ENV):
         raise ValueError('Invalid environment.') """
     
 def set_llm_value(name, decrypt=False, env=ENV):
-    '''Returns a value for the LLM API the environment or parameter store.'''
+    '''Returns a value for the LLM API from the environment or parameter store.'''
 
     # get the llm provider
     provider = set_value('LLM_PROVIDER', decrypt=decrypt, env=env)
@@ -59,6 +62,7 @@ database = {
 
 llm = {
     'provider': set_value('LLM_PROVIDER'),
+    'summarization_target_word_count': int(set_value('LLM_SUMMARIZATION_TARGET_WORD_COUNT')),
     'api_key': set_llm_value('API_KEY'),
     'model': set_llm_value('MODEL'),
 }
@@ -70,4 +74,8 @@ file_save = {
 
 game_intro = {
     'path': set_value('GAME_INTRO_PATH')
+}
+
+game_version = {
+    'version': set_value('GAME_VERSION')
 }

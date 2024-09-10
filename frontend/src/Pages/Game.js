@@ -1,5 +1,4 @@
 import { React, useEffect, useState, useRef } from 'react';
-import { ReactTyped } from 'react-typed';
 import axios from 'axios';
 
 
@@ -261,13 +260,13 @@ const Game = ( props ) => {
 
 
             let streamAccumulator = '';
-            const words = 50;
+            const words = 500;
             let i = 0;
             for await (const chunk of gameIntroStream) {
                 // add chunk to the current stream
                 streamAccumulator += chunk;
 
-                // for the first 150 words, scroll down
+                // with every word, scroll down
                 if ((streamAccumulator.split(' ').length > i) && (i < words)) {
                     window.scrollBy({ top: 500, behavior: 'smooth' });
                     i++;
