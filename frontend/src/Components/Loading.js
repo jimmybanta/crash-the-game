@@ -4,16 +4,20 @@ import { React, useState } from 'react';
 
 
 
-const Loading = ({ fontSize }) => {
+const Loading = ({ size }) => {
 
     // maybe make it responsive to container size, or we can pass in font size
     // so we can use it in multiple contexts?
 
+    const fontClass = (size === 'large') ? 'text header': 'text loading-dots';
+
 
     return (
-        <div className='container flex-row'>
-            <div className='text header'>
-                Loading
+        <div className='container flex-row'
+        style={{ justifyContent: (size === 'large') ? 'center': 'flex-start',
+            paddingBottom: '20px'
+        }}>
+            <div className={fontClass}>
                 <span className="dot">.</span>
                 <span className="dot">.</span>
                 <span className="dot">.</span>

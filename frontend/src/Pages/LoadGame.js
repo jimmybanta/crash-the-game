@@ -3,7 +3,7 @@ import axios from 'axios';
 
 import { BASE_URL } from '../BaseUrl';
 
-import { generateStream } from '../streaming';
+import { generateStream } from '../apiCall';
 
 import Game from './Game';
 

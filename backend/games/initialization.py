@@ -5,7 +5,7 @@ from games.models import Game, Location, Character, Skill
 from prompting import prompt
 from utils import add_info_to_initialization_prompt
 
-def create_scenario_title(theme=None, timeframe=None, details=None):
+def create_title(theme=None, timeframe=None, details=None):
     ''' 
     The first call to the LLM API, to create the title of the game scenario. 
     '''
@@ -36,8 +36,6 @@ def create_crash(title=None, theme=None, timeframe=None, details=None):
     # return the prompt function as a generator, for streaming
     return prompt(crash_prompt, max_tokens=800, 
                     stream=True, context='create_crash', caching=False)
-
-
 
 def create_location(crash_story, title=None, theme=None, timeframe=None, details=None):
     '''
@@ -219,7 +217,6 @@ def create_characters(crash_story, location_description, skills_str,
     print(total_cost)
 
     return characters_str, characters_list, total_cost
-
 
 def create_wakeup(crash_story, location_description, skills, characters, 
                   title=None, theme=None, timeframe=None, details=None):

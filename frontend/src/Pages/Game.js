@@ -7,8 +7,9 @@ import SaveKeyModal from '../Components/SaveKeyModal';
 import CharactersModal from '../Components/CharactersModal';
 import Header from '../Components/Header';
 import Footer from '../Components/Footer';
+import Loading from '../Components/Loading';
 
-import { generateStream } from '../streaming';
+import { generateStream } from '../apiCall';
 
 
 const Game = ( props ) => {
@@ -40,22 +41,28 @@ const Game = ( props ) => {
     const [saveKeyModalOpen, setSaveKeyModalOpen] = useState(false);
     const [charactersModalOpen, setCharactersModalOpen] = useState(false);
 
-    const [devMode, setDevMode] = useState(props.devMode);
-
+    // auto-scroll ref
     const bottomRef = useRef(null);
+
+    // loading dots
+    const [loading, setLoading] = useState(false);
+
+    const [devMode, setDevMode] = useState(props.devMode);
 
     // auto-scroll
     useEffect(() => {
 
         // if we're loading a game (or a game has loaded), scroll to the bottom of the last textbox
         if (gameContext === 'loadGame' || gameContext === 'gameLoaded') {
-            console.log('scrolling to bottom');
             bottomRef.current?.scrollIntoView({ behavior: 'instant', block: 'end' });
         }
 
-        // if it's a new game, then don't scroll
+        // if the user has just submitted input, scroll so the loading dots are visible
+        if (loading) {
+            window.scrollBy({ top: 500, behavior: 'smooth' });
+        }
         
-    }, [currentStream]);
+    }, [currentStream, loading]);
 
     // initialize/load game
     useEffect(() => {
@@ -105,6 +112,8 @@ const Game = ( props ) => {
                 
                 // then - generate the crash story
 
+                setLoading(true);
+
                 const crashStream = await generateStream(
                     '/games/initialize_game_crash/',
                     { game_id: gameId,
@@ -131,6 +140,8 @@ const Game = ( props ) => {
                 });
                 setHistory(tempHistory);
 
+                setLoading(true);
+
                 // then - generate the wakeup story
                 const wakeupStream = await generateStream(
                     '/games/initialize_game_wakeup/',
@@ -139,6 +150,8 @@ const Game = ( props ) => {
                         dev: devMode
                      }
                 );
+
+                setLoading(false);
 
                 // reset the current stream
                 streamAccumulator = '';
@@ -251,6 +264,9 @@ const Game = ( props ) => {
 
         if (gameContext === 'gameIntro') {
 
+            // render the loading dots
+            setLoading(true);
+
             // then, make an api call to get the game intro
             const gameIntroStream = await generateStream(
                 '/games/initialize_game_intro/',
@@ -258,7 +274,10 @@ const Game = ( props ) => {
                  }
             );
 
+            // turn off the loading dots
+            setLoading(false);
 
+            // stream in the response
             let streamAccumulator = '';
             const words = 500;
             let i = 0;
@@ -272,14 +291,13 @@ const Game = ( props ) => {
                     i++;
                 }
 
-
                 setCurrentStream(streamAccumulator);
             }
 
             // clear the current stream
             setCurrentStream('');
 
-            // add it to history
+            // add intro to history
             let tempHistory = [...history];
             tempHistory.push({
                 'writer': 'intro',
@@ -288,17 +306,19 @@ const Game = ( props ) => {
             setHistory(tempHistory);
 
             // then, set the game context to gamePlay
+            // so the player can start playing
             setGameContext('gamePlay');
-
-
         }
         else {
 
             // if a response is still streaming in, don't let them submit
             if (currentStream) {
-                alert('Patience.');
+                alert('Patience...');
                 return;
             }
+
+            // render the loading dots
+            setLoading(true);            
 
             // add the user text to history
             let tempHistory = [...history];
@@ -318,8 +338,12 @@ const Game = ( props ) => {
                  }
             );
 
+            // turn off the loading dots
+            setLoading(false);
+
+            // stream in the response
             let streamAccumulator = '';
-            const words = 100;
+            const words = 125;
             let i = 0;
             for await (const chunk of mainLoopStream) {
                 // add chunk to the current stream
@@ -337,74 +361,13 @@ const Game = ( props ) => {
             // clear the current stream
             setCurrentStream('');
 
-            // add it to history
+            // add response to history
             tempHistory.push({
                 'writer': 'ai',
                 'text': streamAccumulator
             });
             setHistory(tempHistory);
         }
-
-    };
-
-    const renderCurrentStream = () => {
-
-        // if it's a new game, we don't want it to scroll
-        if (gameContext === 'newGame') {
-            // if there's a current stream, render it
-            if (currentStream) {
-                return (
-                    <TextBox
-                    writer={'ai'} 
-                    text={currentStream}/>
-                )
-            } 
-            // otherwise, don't render anything
-            else {
-                return null;
-            }
-        }
-
-        /* else if (gameContext === 'gamePlay') {
-            if (currentStream) {
-                return (
-                    <div style={{
-                        //border: '1px solid white'
-                        }}>
-                        <div ref={bottomRef} 
-                        style={{ 
-                            visibility: 'hidden',
-                            height: '0px', 
-                            userSelect: 'none' }} />
-                        <TextBox
-                        writer={'ai'} 
-                        text={currentStream}/>
-                    </div>
-                )
-            }
-            else {
-                return null;
-            }
-        }
- */
-
-        // if we're loading, introducing, or playing a game, we want to scroll
-        // loading - scroll to the bottom of the last element
-        // introducing or playing - scroll to the top of the last element - so the player can read at their own pace
-        // top or bottom will be handled in the useEffect, with the alignToTop value
-        else {
-            if (currentStream) {
-                return (
-                    <TextBox
-                    writer={'ai'} 
-                    text={currentStream}/>
-                )
-            }
-            else {
-                return null;
-            }
-        }
-
 
     };
 
@@ -438,6 +401,9 @@ const Game = ( props ) => {
                 {/* render the header - contains the title */}
                 <Header gameContext={gameContext} title={title} />
 
+                {/* render the loading screen if the title is still loading */}
+                {title === '' && <Loading size={'large'}/>}
+
                 {/* go through the history, and render each text box */}
                 {history.map((item) => {
                     return (
@@ -450,12 +416,16 @@ const Game = ( props ) => {
                 })}
 
                 {/* render the current stream, if there's anything in it */}
-                {/* {renderCurrentStream()} */}
+                {/* otherwise, render the loading dots */}
                 {currentStream && 
                 <TextBox
                 gameContext={gameContext}
                 writer={(gameContext === 'gameIntro') ? 'intro' : 'ai'} 
-                text={currentStream}/>}
+                text={currentStream}/>
+                }
+
+                {loading && <Loading size={'small'}/>}
+
                 {/* add a div to scroll to */}
                 <div ref={bottomRef}
                     style={{ 

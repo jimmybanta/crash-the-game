@@ -1,7 +1,45 @@
 
+import axios from 'axios';
 
-const BASE_URL = 'http://127.0.0.1:8000';
+import { BASE_URL } from './BaseUrl';
 
+// function for making an API call - that isn't streaming
+export async function apiCall({method, url, 
+                                data = null, params = null}) {
+    try {
+
+    let response; 
+    if (method === 'get') {
+    response = await axios ({
+    method: method,
+    url: url,
+    params: params, 
+    });
+    }
+    else if (method === 'post') {
+    response = await axios ({
+    method: method,
+    url: url,
+    data: data,
+    });
+    }
+    else {
+    response = await axios ({
+    method: method,
+    url: url,
+    data: data,
+    });
+    }
+
+    if (response.status === 200) {
+    return [true, response.data];
+    } else {
+    return [false, response.data];
+    }
+    } catch (error) {
+    return [false, `There was a problem communicating with the server - please try again.`];
+    }
+    };
 
 // functions for streaming data from the server
 // for use when the server returns a StreamingHttpResponse

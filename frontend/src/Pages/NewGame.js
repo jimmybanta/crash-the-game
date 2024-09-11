@@ -24,7 +24,7 @@ const NewGame = ({ onSetCurrentPage }) => {
 
     const [setupComplete, setSetupComplete] = useState(false);
 
-    const [devMode, setDevMode] = useState('false');
+    const [devMode, setDevMode] = useState('true');
 
 
     useEffect(() => {
@@ -75,7 +75,7 @@ const NewGame = ({ onSetCurrentPage }) => {
 
             {/* if we have set up, but don't have the game key yet
             then render loading */}
-            { setupComplete && !saveKey && <Loading />}
+            { (setupComplete && !saveKey) && <Loading size={'large'} />}
 
             {/* if we have the game key, then render the game */}
             { setupComplete && saveKey && 

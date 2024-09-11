@@ -183,6 +183,11 @@ html, body {
   margin-bottom: 3%;
 }
 
+.loading-dots {
+  font-size: calc(2rem + 1.5vw); /* Relative font size */
+  user-select: none;
+}
+
 
 /* containers */
 

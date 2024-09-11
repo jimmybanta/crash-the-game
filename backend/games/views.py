@@ -1,8 +1,6 @@
-from django.shortcuts import render
-from django.http import JsonResponse, StreamingHttpResponse
+from django.http import JsonResponse, StreamingHttpResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.decorators import api_view
-
 from rest_framework import viewsets
 
 import time
@@ -10,20 +8,18 @@ from uuid import uuid4
 import json
 
 import config
+from prompting import prompt
 
 from games.serializers import CharacterSerializer, SkillSerializer
-
 from games.models import Game, Location, Character, Skill
 
-from games.initialization import create_scenario_title, create_crash, create_location, create_skills, create_characters, create_wakeup
+from games.initialization import create_title, create_crash, create_location, create_skills, create_characters, create_wakeup
 from games.summarize import summarize, fix_summary_history
 from games.save_game import save_text
 from games.load_game import load_history, load_history_summary, load_latest_file
 
-from prompting import prompt
 
-
-DEV_GAME_ID = 162
+DEV_GAME_ID = 191
 
 # Create your views here.
 
@@ -32,6 +28,11 @@ DEV_GAME_ID = 162
 class CharacterViewSet(viewsets.ModelViewSet):
     '''
     API endpoint that allows characters to be viewed.
+
+    Parameters
+    ----------
+    game_id : int
+        The ID of the game that the characters are in.
     '''
     serializer_class = CharacterSerializer
 
@@ -50,6 +51,11 @@ class CharacterViewSet(viewsets.ModelViewSet):
 class SkillViewSet(viewsets.ModelViewSet):
     '''
     API endpoint that allows skills to be viewed.
+
+    Parameters
+    ----------
+    game_id : int
+        The ID of the game that the skills are in.
     '''
     serializer_class = SkillSerializer
 
@@ -65,32 +71,15 @@ class SkillViewSet(viewsets.ModelViewSet):
         else:
             return None
 
+
 @csrf_exempt
 @api_view(['GET'])
 def get_current_version(request):
     '''
-    Returns the version of the game.
+    Returns the current version of the game.
     '''
 
     return JsonResponse({'version': config.game_version['version']})
-
-
-@csrf_exempt
-@api_view(['POST'])
-def check_save_key(request):
-    '''
-    Checks if a save key is valid.
-    '''
-
-    save_key = request.data['save_key']
-
-    try:
-        _ = Game.objects.get(save_key=save_key)
-        return JsonResponse({'valid': True})
-    except:
-        return JsonResponse({'valid': False})
-
-
 
 @csrf_exempt
 @api_view(['POST'])
@@ -119,16 +108,25 @@ def initialize_game_key(request):
     # return the key and game ID, so the frontend can keep track of the game
     return JsonResponse({'save_key': save_key, 'game_id': game.id })
 
-
-
-
 @csrf_exempt
 @api_view(['POST'])
 def initialize_game_title(request):
     '''
     Given a theme and details, creates a title for the game scenario and returns it to the frontend.
+
+    API Parameters
+    --------------
+    game_id : int
+        The ID of the game.
+    theme : str
+        The theme of the game.
+    timeframe : str
+        The timeframe of the game.
+    details : str
+        The details of the game.
     '''
     
+    # get parameters
     game_id = request.data['game_id']
     theme = request.data['theme']
     timeframe = request.data['timeframe']
@@ -141,7 +139,7 @@ def initialize_game_title(request):
         return JsonResponse({'title': game.title})
 
     # generate the title and the cost to create it
-    title, cost = create_scenario_title(theme=theme, timeframe=timeframe, details=details)
+    title, cost = create_title(theme=theme, timeframe=timeframe, details=details)
 
     # update the game with this info
     game = Game.objects.get(id=game_id)
@@ -152,26 +150,32 @@ def initialize_game_title(request):
     game.total_dollar_cost += cost
     game.save()
 
+    # return the title
     return JsonResponse({'title': title})
-
 
 @csrf_exempt
 @api_view(['POST'])
 def initialize_game_crash(request):
     '''
     Given a game (which should now have a theme, details, and a title), 
-    generates a crash scenario, to be sent back to the frontend.
+    generates a crash story, to be sent back to the frontend.
+
+    API Parameters
+    --------------
+    game_id : int
+        The ID of the game.
     '''
 
-    # wait a couple seconds, to let the player read the title
+    # wait some time, to let the player read the title
     time.sleep(0.5)
     
+    # get parameters
     game_id = request.data['game_id']
 
 
     dev = request.data['dev']
     if dev == 'true':
-        time.sleep(0.5)
+        time.sleep(1)
         with open(f'/Users/jimbo/Documents/coding/projects/survival-game/backend/game_files/{DEV_GAME_ID}/full_text/0.json', 'r') as f:
             data = json.load(f)
 
@@ -185,7 +189,8 @@ def initialize_game_crash(request):
     # get the game
     game = Game.objects.get(id=game_id)
 
-    # create a custom generator
+
+    # create a custom generator to return the crash story
     def generate_response():
         crash_story = ''
 
@@ -193,11 +198,13 @@ def initialize_game_crash(request):
         for chunk in create_crash(title=game.title, theme=game.theme,
                                 timeframe=game.timeframe, details=game.starting_details):
             
+            # if it's text, yield it
             if chunk['type'] == 'text':
                 crash_story += chunk['text']
                 yield chunk['text']
+            # the last chunk will be the message stop, which has cost data
+            # cost = cost to generate the crash story
             elif chunk['type'] == 'message_stop':
-                # add the cost to generate it
                 cost = chunk['cost']
                 game.total_dollar_cost += cost
         
@@ -207,6 +214,7 @@ def initialize_game_crash(request):
         # summarize the crash story
         summary, summary_cost = summarize(crash_story, target_words=config.llm['summarization_target_word_count'])
 
+        # update the game cost
         game.total_dollar_cost += summary_cost
         game.save()
 
@@ -214,30 +222,34 @@ def initialize_game_crash(request):
         crash_message = 'Start the story for me - have them crash land.'
         save_text(game_id=game_id, text=crash_message, writer='human', type='summaries')
 
-        # save the summary to file
+        # then save the summary to file
         save_text(game_id=game_id, text=summary, writer='ai', type='summaries')
 
 
-
     # generate the crash and return it as a streaming response
-    response = StreamingHttpResponse(generate_response(), content_type='text/plain')
-
-    return response
-
-
+    return StreamingHttpResponse(generate_response(), content_type='text/plain')
 
 @csrf_exempt
 @api_view(['POST'])
 def initialize_game_wakeup(request):
     '''
     Given a game, generates the wake-up scene for the player.
+
+    API Parameters
+    --------------
+    game_id : int
+        The ID of the game.
+    crash_story : str
+        The crash story of the game.
     '''
     
+    # get parameters
     game_id = request.data['game_id']
     crash_story = request.data['crash_story']
 
     dev = request.data['dev']
     if dev == 'true':
+        time.sleep(1)
         def generate_response():
             with open(f'/Users/jimbo/Documents/coding/projects/survival-game/backend/game_files/{DEV_GAME_ID}/full_text/0.json', 'r') as f:
                 data = json.load(f)
@@ -247,12 +259,13 @@ def initialize_game_wakeup(request):
                     yield char
         return StreamingHttpResponse(generate_response(), content_type='text/plain')
 
-
+    # get the game
     game = Game.objects.get(id=game_id)
+
 
     # first, we need to generate the starting location description
     location_name, location_description, location_cost = create_location(crash_story, title=game.title, theme=game.theme,
-                                        timeframe=game.timeframe, details=game.starting_details)
+                                                                            timeframe=game.timeframe, details=game.starting_details)
     
     # then, create a new location object
     location = Location.objects.create(
@@ -262,18 +275,21 @@ def initialize_game_wakeup(request):
 
     # add the location to the game
     game.locations.add(location)
+    # update game cost
     game.total_dollar_cost += location_cost
     game.save()
 
-    # save location info to file
+    # save location info to the initialization file
     save_text(game_id=game_id, text=f'Location name: {location_name}', writer='ai', type='initialization')
     save_text(game_id=game_id, text=f'Location description: {location_description}', writer='ai', type='initialization')
 
+
     # now we need to generate skills that match the location/scenario
     skills_str, skills_list, skills_cost = create_skills(crash_story, location_description, 
-                            title=game.title, theme=game.theme,
-                            timeframe=game.timeframe, details=game.starting_details)
-        
+                                                            title=game.title, theme=game.theme,
+                                                            timeframe=game.timeframe, details=game.starting_details)
+    
+    # create skill objects and add to the game
     for name, description in skills_list:
         skill = Skill.objects.create(
             name=name,
@@ -281,16 +297,20 @@ def initialize_game_wakeup(request):
         )
 
         game.skills.add(skill)
+    
+    # update game cost
     game.total_dollar_cost += skills_cost
     game.save()
 
     # save skills to file
     save_text(game_id=game_id, text=f'Skills: {skills_str}', writer='ai', type='initialization')
 
+
     # now, we need to generate characters that match the location, scenario, and skills
     characters_str, characters_list, characters_cost = create_characters(crash_story, location_description, skills_str,
-                                                title=game.title, theme=game.theme,
-                                                timeframe=game.timeframe, details=game.starting_details)
+                                                                            title=game.title, theme=game.theme,
+                                                                            timeframe=game.timeframe, details=game.starting_details)
+    # create the character objects and add to the game
     # characters list is a list of character dicts
     for character in characters_list:
             
@@ -304,26 +324,29 @@ def initialize_game_wakeup(request):
 
         game.characters.add(new_character)
 
+    # update game cost
     game.total_dollar_cost += characters_cost
     game.save()
 
     # save characters to file
     save_text(game_id=game_id, text=f'Characters: {characters_str}', writer='ai', type='initialization')
 
-    # finally, create the wake up scene, and return it to the player
 
+    # finally, create the wake up scene, and return it to the player
     # create a custom generator
     def generate_response():
         wakeup_story = ''
 
         # iterate through the wakeup story
         for chunk in create_wakeup(crash_story, location_description, skills_str, characters_str,
-                                title=game.title, theme=game.theme,
-                                timeframe=game.timeframe, details=game.starting_details):
+                                    title=game.title, theme=game.theme,
+                                    timeframe=game.timeframe, details=game.starting_details):
             
+            # if it's text, yield it
             if chunk['type'] == 'text':
                 wakeup_story += chunk['text']
                 yield chunk['text']
+            # the last chunk will be the message stop, which has cost data
             elif chunk['type'] == 'message_stop':
                 # add the cost to generate it
                 cost = chunk['cost']
@@ -335,6 +358,7 @@ def initialize_game_wakeup(request):
         # summarize the wakeup story
         summary, summary_cost = summarize(wakeup_story, target_words=config.llm['summarization_target_word_count'])
 
+        # update game cost
         game.total_dollar_cost += summary_cost
         game.save()
 
@@ -347,27 +371,28 @@ def initialize_game_wakeup(request):
 
 
     # generate the crash and return it as a streaming response
-    response = StreamingHttpResponse(generate_response(), content_type='text/plain')
-
-    return response
-
+    return StreamingHttpResponse(generate_response(), content_type='text/plain')
 
 @csrf_exempt
 @api_view(['POST'])
 def initialize_game_intro(request):
     '''
     Returns the game intro to the player.
+
+    API Parameters
+    --------------
+    game_id : int
+        The ID of the game.
     '''
 
+    time.sleep(5)
+
+    # get the game ID
     game_id = request.data['game_id']
-
+    # get the game
     game = Game.objects.get(id=game_id)
-
-    # get the game characters
-    characters = game.characters.all()
-
-    # get their names
-    character_names = [character.name.split()[0] for character in characters]
+    # get the game character names
+    character_names = [character.name.split()[0] for character in game.characters.all()]
 
     # get the game intro
     intro = f'''{character_names[0]}, {character_names[1]}, and {character_names[2]} need your help!
@@ -394,25 +419,30 @@ So - what will you do next?'''
             time.sleep(0.007)
             yield chunk
 
-
     return StreamingHttpResponse(generate_response(), content_type='text/plain')
-
 
 @csrf_exempt
 @api_view(['POST'])
 def load_game_info(request):
     '''
     Loads the game info - title, theme, timeframe, and details - for the player.
+
+    API Parameters
+    --------------
+    save_key : str
+        The save key for the game.
     '''
 
+    # get the save key
     save_key = request.data['save_key']
 
     try:
         game = Game.objects.get(save_key=save_key)
     except:
-        return JsonResponse({'error': 'Invalid save key.'})
+        warning = 'Invalid save key.'
+        return HttpResponse(warning, status=255)
 
-    # get the game info
+    # get the game info and return it
     game_info = {
         'id': game.id,
         'title': game.title,
@@ -420,9 +450,7 @@ def load_game_info(request):
         'timeframe': game.timeframe,
         'details': game.starting_details
     }
-
     return JsonResponse(game_info)
-
 
 @csrf_exempt
 @api_view(['POST'])
@@ -488,7 +516,7 @@ def main_loop(request):
     except:
         dev = 'false'
     if dev == 'true':
-        time.sleep(1)
+        time.sleep(5)
         with open(f'/Users/jimbo/Documents/coding/projects/survival-game/backend/game_files/{DEV_GAME_ID}/full_text/0.json', 'r') as f:
             data = json.load(f)
 
@@ -562,7 +590,7 @@ Monsters and scary creatures are ok, but drama, funny characters, and bizarre tw
     def generate_response():
         response = ''
         for chunk in prompt(history_fixed, context='main_loop', 
-                            system=main_loop_prompt, stream=True, caching=False):
+                            system=main_loop_prompt, stream=True, caching=True):
             
             if chunk['type'] == 'text':
                 response += chunk['text']
