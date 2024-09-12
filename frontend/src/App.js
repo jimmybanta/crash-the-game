@@ -6,6 +6,8 @@ import NewGame from './Pages/NewGame';
 import LoadGame from './Pages/LoadGame';
 
 function App() {
+  // our main app component
+  
   const [currentPage, setCurrentPage] = useState('Home');
 
   return (

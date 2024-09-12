@@ -4,6 +4,7 @@ import { ReactTyped } from 'react-typed';
 
 
 const Header = ({ gameContext, title }) => {
+    // a header that renders the Title of the game
 
     // function for rendering the title, based on the game context
     const renderTitle = () => {

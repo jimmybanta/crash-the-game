@@ -1,9 +1,11 @@
 
 import axios from 'axios';
 
-import { BASE_URL } from './BaseUrl';
+import { BASE_URL } from './BaseURL';
 
 axios.defaults.baseURL = BASE_URL;
+
+//// functions for making calls to the backend
 
 // function for making an API call - that isn't streaming
 export const apiCall = async ({method, url, 
@@ -46,8 +48,8 @@ export const apiCall = async ({method, url,
     }
     };
 
-// functions for streaming data from the server
-// for use when the server returns a StreamingHttpResponse
+//// functions for streaming data from the server
+//// for use when the server returns a StreamingHttpResponse
 
 // Utility function to format URL correctly
 const formatUrl = (baseUrl, endpoint) => {
@@ -60,7 +62,7 @@ const formatUrl = (baseUrl, endpoint) => {
   return baseUrl + endpoint;
 };
 
-// generateStream takes a url and data and returns an async generator
+// generateStream takes a method, url and data and returns an async generator
 export const apiStream = async ({method, url, 
                                   data = null}) => {
 
@@ -87,10 +89,10 @@ export const apiStream = async ({method, url,
     //throw new Error('Response body does not exist')
     
     return getIterableStream(response)
-  }
+};
   
 
-// getIterableStream takes a response body and returns an async generator
+// getIterableStream takes a response and returns an async generator
 export async function* getIterableStream(response) {
 
     const reader = response.body.getReader()

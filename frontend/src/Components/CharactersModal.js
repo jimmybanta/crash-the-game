@@ -149,8 +149,11 @@ const CharactersModal = ({ toggle, characters, skillDescriptions }) => {
 
     return (
         <Modal centered size="lg" isOpen={true} toggle={toggle}>
-            <ModalHeader className="modal-text" style={{ userSelect: "none" }}>
-                Characters -- click to expand
+            <ModalHeader>
+                <div className="modal-text-header"
+                style={{userSelect: 'none', cursor: 'default'}}>
+                    Characters
+                </div>
             </ModalHeader>
             <ModalBody style={{ maxHeight: "70vh", overflowY: "auto" }}>
                 {displayError ? 
@@ -164,11 +167,16 @@ const CharactersModal = ({ toggle, characters, skillDescriptions }) => {
                             return renderCharacter(character);
                         })}
                     </div>
+                    <div className='modal-text'>
+                        Click on a character's name to expand their info.
+                    </div>
+                    
                 </div>
                     }
                 
             </ModalBody>
             <ModalFooter>
+                
                 <div className="button modal-button" onClick={toggle}>
                     Done
                 </div>

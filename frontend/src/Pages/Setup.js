@@ -28,14 +28,10 @@ const Setup = ({ onSetCurrentPage, onSubmit }) => {
         setDetails(resp.details);
     };
 
-
-
     // game info submission
     const handleSubmit = () => {
         onSubmit(theme, timeframe, details);
     };
-
-
 
     return (
         <div
@@ -70,8 +66,8 @@ const Setup = ({ onSetCurrentPage, onSubmit }) => {
                 />
             </div>
 
-            <div className='container flex-column' style={{ width: '75%', margin: '3%' }}>
-                <h1 className='text setup-input-header'>any added details to include ?</h1>
+            <div className='container flex-column' style={{ width: '75%', margin: '3%', marginBottom: '1%' }}>
+                <h1 className='text setup-input-header'>any details to include ?</h1>
                 <input
                     className='setup-input'
                     type='text'
@@ -82,7 +78,7 @@ const Setup = ({ onSetCurrentPage, onSubmit }) => {
             </div>
 
             {/* buttons */}
-            <div className='button setup-for-me-button text' style={{ marginTop: '3%' }} onClick={() => handleRandomSetup()}>
+            <div className='button setup-for-me-button text' style={{ marginTop: '2%' }} onClick={() => handleRandomSetup()}>
                 setup for me
             </div>
 

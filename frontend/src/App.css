@@ -5,7 +5,7 @@
 :root {
   --background-color: #1d1d1d;
   --background-color-rgb: 29, 29, 29;
-  --edge-opacity: 0.7;
+  --edge-opacity: 0.85;
   --text-color: #e3e9f5;
   --user-text-color: #a9a9a9;
   --modal-background-color: #c8c8c8;
@@ -16,7 +16,7 @@
   --highlight-color: #f1d9ff;
 }
 
-
+/* app and body */
 .App {
   text-align: center;
   min-width: 100%;
@@ -85,8 +85,8 @@ html, body {
   color: var(--background-color);
 }
 
-/* inputs */
 
+/* inputs */
 .setup-input {
   background-color: var(--background-color);
   border: none; /* Remove default borders */
@@ -130,8 +130,8 @@ html, body {
 
 }
 
-/* text */
 
+/* text */
 .text {
   color: var(--text-color);
 }
@@ -216,7 +216,6 @@ html, body {
 
 
 /* containers */
-
 .container {
   border: 0px solid #e3e9f5;
   box-sizing: border-box;
@@ -269,8 +268,7 @@ html, body {
 }
 
 
-/* loading */ 
-
+/* loading dots */ 
 .dot {
   animation: blink 1.4s infinite both;
 }
@@ -299,8 +297,8 @@ html, body {
   }
 }
 
-/* auto-scroll */
 
+/* auto-scroll */
 .auto-scroll {
   position: absolute;
 

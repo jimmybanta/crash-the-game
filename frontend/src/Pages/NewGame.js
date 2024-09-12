@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 
-import Setup from '../Components/Setup';
-import Loading from '../Components/Loading';
+import Setup from './Setup';
 import Game from './Game';
+
+import Loading from '../Components/Loading';
 
 import { apiCall } from '../api';
 

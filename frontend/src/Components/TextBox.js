@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 
 const TextBox = ({ gameContext, writer, text }) => {
+    // the base component that displays text in the game
 
     // there are three options for writer
     // 'user' - the user

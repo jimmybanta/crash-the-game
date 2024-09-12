@@ -3,7 +3,7 @@ import axios from 'axios';
 
 import Game from './Game';
 import { apiCall } from '../api';
-import { BASE_URL } from '../BaseUrl';
+import { BASE_URL } from '../BaseURL';
 
 axios.defaults.baseURL = BASE_URL;
 
