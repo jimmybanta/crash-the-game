@@ -1,9 +1,7 @@
-''' Functions to summarize text - for the purpose of keeping costs with API calls. '''
+''' Functions to summarize text - for the purpose of increasing latency and decreasing costs from LLM API calls. '''
 
-import logging
 
 from games.prompting import prompt
-
 from games.decorators import retry_on_exception, catch_and_log
 
 
@@ -11,6 +9,20 @@ from games.decorators import retry_on_exception, catch_and_log
 def summarize(text, target_words=50):
     ''' 
     Uses the LLM to summarize text.
+
+    Parameters
+    ----------
+    text : str
+        The text to summarize.
+    target_words : int
+        The target number of words for the summary.
+
+    Returns
+    -------
+    str
+        The summary.
+    float
+        The cost to generate the summary.
     '''
 
     system_prompt = '''You are a summarization AI, working within the context of a storytelling game
@@ -34,6 +46,16 @@ def fix_summary_history(history):
     Given a history of summaries, checks to make sure everything is formatted correctly.
     Mainly, checks that there are no consecutive 'ai' or 'human' texts, as the LLM can't accept these.
     If there are, it removes the first one.
+
+    Parameters
+    ----------
+    history : list
+        A list of dictionaries, each with a 'writer' and 'text' key.
+    
+    Returns
+    -------
+    list
+        The corrected history
     '''
 
     new_history = []

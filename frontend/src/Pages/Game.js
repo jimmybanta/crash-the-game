@@ -64,7 +64,7 @@ const Game = (props) => {
         }
 
         // if the user has just submitted input, scroll so the loading dots are visible
-        if (loading) {
+        if (loading && !(gameContext === 'newGame')) {
             window.scrollBy({ top: 500, behavior: 'smooth' });
         }
     }, [currentStream, loading]);
@@ -347,6 +347,8 @@ const Game = (props) => {
         else {
             // if a response is still streaming in, don't let them submit
             if (currentStream) {
+                // reset the user input
+                setInputTextOnError(text);
                 alert('Patience...');
                 return;
             }

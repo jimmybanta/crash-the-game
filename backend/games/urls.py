@@ -1,3 +1,5 @@
+''' This file contains the URL patterns for the games app. '''
+
 from django.urls import path, include
 from rest_framework import routers
 
@@ -8,10 +10,10 @@ router = routers.DefaultRouter()
 router.register(r'characters', views.CharacterViewSet, 'characters')
 router.register(r'skills', views.SkillViewSet, 'skills')
 
-
-
 urlpatterns = [
     path('api/', include(router.urls)),
+
+    # getting the current version
     path('get_current_version/', views.get_current_version),
 
     # game initialization

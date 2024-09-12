@@ -5,8 +5,6 @@ import dotenv
 import json
 import boto3
 
-from games.load_game import load_txt_file
-
 
 # load environment variables and aws region
 ## this is necessary for when celery runs as a daemon
@@ -16,16 +14,16 @@ dotenv.load_dotenv()
 ENV = os.getenv('ENV')
 REGION = os.getenv('AWS_REGION')
 
+# temporarily, to test out
+ENV = 'STAG'
+
 if not ENV:
     raise ValueError('Environment not set.')
 
 if ENV != 'DEV':
-    # if this is staging or production, set clients
+    # if this is staging or production, set the client
     ## parameter store
     SSM = boto3.client('ssm', region_name=REGION)
-    # secrets manager
-    SM = boto3.client('secretsmanager', region_name=REGION)
-
 
 # helper functions
 def get_parameter(name, decrypt=False, env=ENV):
@@ -55,7 +53,8 @@ def set_llm_value(name, decrypt=False, env=ENV):
 
 
 # use .env file for local development environment
-if ENV == 'DEV':
+### THIS IS ONLY TEMPORARY
+if ENV == 'DEV' or ENV == 'STAG':
     db_secrets = {
         'username': os.getenv('DB_USER'),
         'password': os.getenv('DB_PASSWORD')
@@ -77,19 +76,22 @@ django = {
     'secret_key': set_value('DJANGO_SECRET_KEY', decrypt=True, env='ALL'),
 }
 
+# TO DO - REPLACE DB VALUES IN PARAMETER STORE ONCE I SPIN UP THE RDS INSTANCE
 database = {
     'name': set_value('DB_NAME', decrypt=True),
-    'user': db_secrets['username'],
-    'password': db_secrets['password'],
+    'user': set_value('DB_USER', decrypt=True),
+    'password': set_value('DB_PASSWORD', decrypt=True),
     'endpoint': set_value('DB_ENDPOINT', decrypt=True),
     'port': set_value('DB_PORT', decrypt=True)
 }
 
+
 llm = {
-    'provider': set_value('LLM_PROVIDER', env='ALL'),
+    'provider': set_value('LLM_PROVIDER'),
     'summarization_target_word_count': int(set_value('LLM_SUMMARIZATION_TARGET_WORD_COUNT', env='ALL')),
-    'api_key': set_llm_value('API_KEY', decrypt=True, env='ALL'),
-    'model': set_llm_value('MODEL', env='ALL'),
+    'api_key': set_llm_value('API_KEY', decrypt=True),
+    'model': set_llm_value('MODEL'),
+    'prompts_path': set_value('PROMPTS_PATH', env='ALL'),
 }
 
 file_save = {
@@ -99,15 +101,25 @@ file_save = {
 }
 
 s3 = {
-    'bucket': set_value('S3_BUCKET'),
+    'data_bucket': set_value('DATA_BUCKET'),
 }
 
 # lists of themes, timeframes, and details for if the user wants a random setup
+
+with open(os.path.join(file_save['game_setup_path'], 'themes.txt')) as f:
+    themes_data = f.read()
+with open(os.path.join(file_save['game_setup_path'], 'timeframes.txt')) as f:
+    timeframes_data = f.read()
+with open(os.path.join(file_save['game_setup_path'], 'details.txt')) as f:
+    details_data = f.read()
+
+
 random_setup = {
-    'themes': [item.strip() for item in load_txt_file(os.path.join(file_save['game_setup_path'], 'themes.txt')).split('\n') if item],
-    'timeframes': [item.strip() for item in load_txt_file(os.path.join(file_save['game_setup_path'], 'timeframes.txt')).split('\n') if item],
-    'details': [item.strip() for item in load_txt_file(os.path.join(file_save['game_setup_path'], 'details.txt')).split('\n') if item]
+    'themes': [item.strip() for item in themes_data.split('\n') if item],
+    'timeframes': [item.strip() for item in timeframes_data.split('\n') if item],
+    'details': [item.strip() for item in details_data.split('\n') if item]
 }
+
 
 # get the current version
 with open('current_version.json') as f:

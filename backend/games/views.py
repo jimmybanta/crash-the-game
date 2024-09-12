@@ -1,13 +1,16 @@
+''' The API views for the server. '''
+
+import time
+import os
+from uuid import uuid4
+import json
+import logging
+
 from django.http import JsonResponse, StreamingHttpResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.decorators import api_view
 from rest_framework import viewsets, status
 from rest_framework.exceptions import APIException
-
-import time
-from uuid import uuid4
-import json
-import logging
 
 import config
 from games.prompting import prompt
@@ -18,7 +21,7 @@ from games.models import Game, Location, Character, Skill
 import games.initialization as initialization
 from games.summarize import summarize, fix_summary_history
 from games.save_game import save_text, remove_turn
-from games.load_game import load_history, load_history_summary, load_latest_file
+from games.load_game import load_history, load_latest_file, load_json
 
 logger = logging.getLogger(__name__)
 
@@ -88,7 +91,7 @@ class SkillViewSet(viewsets.ModelViewSet):
         else:
             raise CustomAPIException()
 
-
+# API Views
 @csrf_exempt
 @api_view(['GET'])
 def get_current_version(request):
@@ -97,7 +100,6 @@ def get_current_version(request):
     '''
 
     return JsonResponse({'version': config.game_version})
-
 
 @csrf_exempt
 @api_view(['POST'])
@@ -147,10 +149,6 @@ def random_setup(request):
         'timeframe': timeframe,
         'details': details
     })
-
-
-
-
 
 @csrf_exempt
 @api_view(['POST'])
@@ -611,6 +609,17 @@ def load_game(request):
 def main_loop(request):
     '''
     The main loop of the game.
+
+    API Parameters
+    --------------
+    game_id : int
+        The ID of the game.
+    user_input : str
+        The user input.
+    history : list
+        The history of the game.
+    turn : int
+        The current turn.
     '''
 
     try:
@@ -674,10 +683,10 @@ def main_loop(request):
         main_loop_prompt += f'Details: {game.starting_details}\n\n' if game.starting_details else 'There are no specified details.\n\n'
 
         ## then, add the location, skills, and characters to the system prompt
-        game_initialization_path = f'{config.file_save["path"]}/{game_id}/initialization.json'
 
-        with open(game_initialization_path, 'r') as f:
-            data = json.load(f)
+        game_initialization_path = os.path.join(config.file_save['path'], str(game_id), 'initialization.json')
+
+        data = load_json(game_initialization_path)
 
         location_name = data[0]['text']
         location_description = data[1]['text']
@@ -696,7 +705,7 @@ def main_loop(request):
     The last is the full text. What you output should be more like the full text.\n\n'''
 
         ## now, add the history
-        history = load_history_summary(game_id)
+        history = load_history(game_id, summaries=True)
         
         # remove the last AI message
         if history[-1]['writer'] == 'ai':

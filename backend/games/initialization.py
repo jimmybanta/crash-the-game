@@ -8,7 +8,6 @@ import config
 from games.prompting import prompt
 from games.utils import add_info_to_initialization_prompt
 from games.decorators import catch_and_log, retry_on_exception
-from games.load_game import load_txt_file
 
 @retry_on_exception(max_retries=3, delay=3)
 def create_title(theme=None, timeframe=None, details=None):

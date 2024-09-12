@@ -9,7 +9,9 @@ temp.ipynb
 .env
 run.py
 */game_files/
+game_data/
 logs/
+deploy.sh
 
 tests
 __pycache__

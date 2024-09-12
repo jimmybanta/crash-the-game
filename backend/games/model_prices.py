@@ -1,4 +1,5 @@
-
+''' This module contains the prices of the models used in the games,
+and a function that uses those prices to calculate the cost of an API call. '''
 
 models = {
     'claude-3-haiku-20240307': {
@@ -13,6 +14,20 @@ models = {
 def calculate_price(model, tokens, caching=True):
     '''
     Calculates the price of an LLM api call.
+
+    Parameters
+    ----------
+    model : str
+        The model to use.
+    tokens : dict
+        A dictionary with the number of tokens for each type.
+    caching : bool
+        Whether caching is enabled.
+
+    Returns
+    -------
+    float
+        The price of the API call.
     '''
 
     if caching:

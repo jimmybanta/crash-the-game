@@ -2,7 +2,7 @@
 ''' Contains functions for prompting the LLM API. '''
 
 import logging
-
+import os
 import anthropic
 
 from anthropic.lib.streaming._prompt_caching_beta_types import MessageStopEvent as CacheMessageStopEvent
@@ -20,14 +20,7 @@ logger = logging.getLogger(__name__)
 PROVIDER = config.llm['provider']
 
 # load in the pre-written prompts, specific to that provider
-PROMPTS = load_yaml(f'prompts/{PROVIDER}.yaml')
-
-""" # instantiate the LLM
-if PROVIDER == 'ANTHROPIC':
-    MODEL = ChatAnthropic(model=config.llm['model'], api_key=config.llm['api_key'], max_tokens_to_sample=2048)
-
- """
-
+PROMPTS = load_yaml(os.path.join(config.llm['prompts_path'], f'{config.llm["provider"].lower()}.yaml'))
 
 def prompt(message, 
            context=None, 

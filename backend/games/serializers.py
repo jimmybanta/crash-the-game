@@ -1,3 +1,5 @@
+''' This file contains the serializers for the models in the games app. '''
+
 from rest_framework import serializers
 
 import games.models as models

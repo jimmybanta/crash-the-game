@@ -5,7 +5,7 @@ from backend.settings_base import *
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = ['backend.crashthegame.com', 'www.backend.crashthegame.com']
+ALLOWED_HOSTS = ['api.crashthegame.com', 'www.api.crashthegame.com']
 
 CORS_ALLOWED_ORIGINS = [
     'https://*.crashthegame.com',
