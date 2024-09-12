@@ -1,10 +1,16 @@
 ''' Contains functions for initializing a game. '''
 
-from games.models import Game, Location, Character, Skill
+import os
+import random
 
-from prompting import prompt
-from utils import add_info_to_initialization_prompt
+import config
 
+from games.prompting import prompt
+from games.utils import add_info_to_initialization_prompt
+from games.decorators import catch_and_log, retry_on_exception
+from games.load_game import load_txt_file
+
+@retry_on_exception(max_retries=3, delay=3)
 def create_title(theme=None, timeframe=None, details=None):
     ''' 
     The first call to the LLM API, to create the title of the game scenario. 
@@ -21,6 +27,31 @@ def create_title(theme=None, timeframe=None, details=None):
     # return the title and the cost to generate it
     return title, cost
 
+@catch_and_log
+def random_setup(num_details=[1, 2, 3]):
+    '''
+    Generates a random setup for a game, pulling from lists of themes, timeframes, and details.
+    '''
+
+    themes = config.random_setup['themes']
+    timeframes = config.random_setup['timeframes']
+    all_details = config.random_setup['details']
+
+    theme = random.choice(themes)
+    timeframe = random.choice(timeframes)
+    details = []
+
+    for _ in range(random.choice(num_details)):
+        detail = random.choice(all_details)
+        # remove the detail from the list so it doesn't get repeated
+        all_details.remove(detail)
+        details.append(detail)
+    
+    details = ', '.join(details)
+
+    return theme, timeframe, details
+
+@catch_and_log
 def create_crash(title=None, theme=None, timeframe=None, details=None):
     ''' 
     Prompts an LLM for the description of the crash - the first thing the player will read - given a theme and details. 
@@ -37,6 +68,7 @@ def create_crash(title=None, theme=None, timeframe=None, details=None):
     return prompt(crash_prompt, max_tokens=800, 
                     stream=True, context='create_crash', caching=False)
 
+@retry_on_exception(max_retries=3, delay=3)
 def create_location(crash_story, title=None, theme=None, timeframe=None, details=None):
     '''
     Creates the starting location for the game.
@@ -64,6 +96,7 @@ def create_location(crash_story, title=None, theme=None, timeframe=None, details
 
     return location_name, location_description, description_cost + name_cost
 
+@retry_on_exception(max_retries=3, delay=3)
 def create_skills(crash_story, location_description, 
                   title=None, theme=None, timeframe=None, details=None):
     '''
@@ -128,6 +161,7 @@ def create_skills(crash_story, location_description,
 
     return skills_str, skills_list, total_cost
 
+@retry_on_exception(max_retries=3, delay=3)
 def create_characters(crash_story, location_description, skills_str,
                       title=None, theme=None, timeframe=None, details=None):
     '''
@@ -211,13 +245,10 @@ def create_characters(crash_story, location_description, skills_str,
     for character in characters_list:
         skills_str = ', '.join([f'{skill}|{level}' for skill, level in character['skills'].items()])
         characters_str += f"{character['name']}--{character['history']}--{character['physical']}--{character['personality']}--{skills_str}\n"
-    
-    print(characters_str)
-    print(characters_list)
-    print(total_cost)
 
     return characters_str, characters_list, total_cost
 
+@catch_and_log
 def create_wakeup(crash_story, location_description, skills, characters, 
                   title=None, theme=None, timeframe=None, details=None):
     '''

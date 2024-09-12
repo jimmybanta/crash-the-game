@@ -2,6 +2,10 @@
 
 import os
 import dotenv
+import json
+import boto3
+
+from games.load_game import load_txt_file
 
 
 # load environment variables and aws region
@@ -10,27 +14,35 @@ dotenv.load_dotenv()
 
 # set environment
 ENV = os.getenv('ENV')
+REGION = os.getenv('AWS_REGION')
 
 if not ENV:
     raise ValueError('Environment not set.')
 
+if ENV != 'DEV':
+    # if this is staging or production, set clients
+    ## parameter store
+    SSM = boto3.client('ssm', region_name=REGION)
+    # secrets manager
+    SM = boto3.client('secretsmanager', region_name=REGION)
+
 
 # helper functions
-""" def get_parameter(name, decrypt=False, env=ENV):
+def get_parameter(name, decrypt=False, env=ENV):
     '''Returns a parameter from the Parameter store.'''
 
     # retrieve value from parameter store
     return SSM.get_parameter(Name=f'/{env}/{name}',
-                             WithDecryption=decrypt)['Parameter']['Value'] """
+                             WithDecryption=decrypt)['Parameter']['Value']
 
 def set_value(name, decrypt=False, env=ENV):
     '''Returns a value from the environment or parameter store.'''
     if ENV == 'DEV':
         return os.getenv(name)
-    """ elif env in ['STAG', 'PROD', 'ALL']: 
+    elif env in ['STAG', 'PROD', 'ALL']: 
         return get_parameter(name, decrypt=decrypt, env=env)
     else:
-        raise ValueError('Invalid environment.') """
+        raise ValueError('Invalid environment.')
     
 def set_llm_value(name, decrypt=False, env=ENV):
     '''Returns a value for the LLM API from the environment or parameter store.'''
@@ -49,8 +61,21 @@ if ENV == 'DEV':
         'password': os.getenv('DB_PASSWORD')
     }
 
+""" # load database credentials from secrets manager for staging and production
+if ENV == 'STAG' or ENV == 'PROD':
+    db_secrets = json.loads(
+        SM.get_secret_value(
+            SecretId='''arn:aws:secretsmanager:us-west-2:148045048853:\
+secret:rds!db-0edeaddf-aaff-4564-989e-5f3b7495a57f-bbOmc7'''
+        )['SecretString']
+    )
+ """
 
 ## set configuration
+
+django = {
+    'secret_key': set_value('DJANGO_SECRET_KEY', decrypt=True, env='ALL'),
+}
 
 database = {
     'name': set_value('DB_NAME', decrypt=True),
@@ -61,21 +86,31 @@ database = {
 }
 
 llm = {
-    'provider': set_value('LLM_PROVIDER'),
-    'summarization_target_word_count': int(set_value('LLM_SUMMARIZATION_TARGET_WORD_COUNT')),
-    'api_key': set_llm_value('API_KEY'),
-    'model': set_llm_value('MODEL'),
+    'provider': set_value('LLM_PROVIDER', env='ALL'),
+    'summarization_target_word_count': int(set_value('LLM_SUMMARIZATION_TARGET_WORD_COUNT', env='ALL')),
+    'api_key': set_llm_value('API_KEY', decrypt=True, env='ALL'),
+    'model': set_llm_value('MODEL', env='ALL'),
 }
 
 file_save = {
-    'path': set_value('FILE_SAVE_PATH'),
-    'max_size': int(set_value('MAX_FILE_SIZE'))
+    'path': set_value('FILE_SAVE_PATH', env='ALL'),
+    'max_size': int(set_value('MAX_FILE_SIZE', env='ALL')),
+    'game_setup_path': set_value('GAME_SETUP_PATH', env='ALL'),
 }
 
-game_intro = {
-    'path': set_value('GAME_INTRO_PATH')
+s3 = {
+    'bucket': set_value('S3_BUCKET'),
 }
 
-game_version = {
-    'version': set_value('GAME_VERSION')
+# lists of themes, timeframes, and details for if the user wants a random setup
+random_setup = {
+    'themes': [item.strip() for item in load_txt_file(os.path.join(file_save['game_setup_path'], 'themes.txt')).split('\n') if item],
+    'timeframes': [item.strip() for item in load_txt_file(os.path.join(file_save['game_setup_path'], 'timeframes.txt')).split('\n') if item],
+    'details': [item.strip() for item in load_txt_file(os.path.join(file_save['game_setup_path'], 'details.txt')).split('\n') if item]
 }
+
+# get the current version
+with open('current_version.json') as f:
+    current_version = json.load(f)['version']
+
+game_version = current_version

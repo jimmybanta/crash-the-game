@@ -15,7 +15,8 @@ urlpatterns = [
     path('get_current_version/', views.get_current_version),
 
     # game initialization
-    path('initialize_game_key/', views.initialize_game_key),
+    path('initialize_save_key/', views.initialize_save_key),
+    path('random_setup/', views.random_setup),
     path('initialize_game_title/', views.initialize_game_title),
     path('initialize_game_crash/', views.initialize_game_crash),
     path('initialize_game_wakeup/', views.initialize_game_wakeup),

@@ -1,11 +1,13 @@
 ''' Functions to summarize text - for the purpose of keeping costs with API calls. '''
 
+import logging
 
-from prompting import prompt
+from games.prompting import prompt
+
+from games.decorators import retry_on_exception, catch_and_log
 
 
-
-
+@retry_on_exception(max_retries=3, delay=3)
 def summarize(text, target_words=50):
     ''' 
     Uses the LLM to summarize text.
@@ -26,7 +28,7 @@ and be sure to include them in your summary.\n'''
 
     return summary, cost
 
-
+@catch_and_log
 def fix_summary_history(history):
     '''
     Given a history of summaries, checks to make sure everything is formatted correctly.

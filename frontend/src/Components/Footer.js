@@ -1,81 +1,72 @@
-import { React, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 
+const Footer = ({ inputText, gameContext, onSubmit, onKeyClick, onCharactersClick }) => {
+    // a component that sits along the bottom
+    // where the user can input their commands
+    // and see the characters and save key buttons
 
+    const [inputValue, setInputValue] = useState(inputText);
 
-const Footer = ({ gameContext, onSubmit, onKeyClick, onCharactersClick }) => {
-    // basically a footer, the place where the user can type in their text
+    useEffect(() => {
+        setInputValue(inputText);
+    }, [inputText]);
 
-    const [inputValue, setInputValue] = useState('');
+    // placeholder for the user input
+    let placeholder = '';
 
-    let placeholder = 'type here...';
-
+    // set the placeholder based on the game context
     if (gameContext === 'gameIntro') {
-        placeholder = "type 'continue', then press enter...";
-    }
-    else if (gameContext === 'gameLoaded') {
-        placeholder = 'welcome back! what would you like to do next?';
-    }
-    else {
-        placeholder = 'what do you want to do?';
+        placeholder = "Type 'continue', then press enter...";
+    } else if (gameContext === 'gameLoaded') {
+        placeholder = 'Welcome back! what would you like to do next?';
+    } else {
+        placeholder = 'What do you want to do?';
     }
 
     const handleKeyPress = (e) => {
-
         if (e.key === 'Enter') {
             onSubmit(inputValue);
             setInputValue('');
         }
-
     };
 
     const renderButtons = () => {
-
         if (gameContext === 'gamePlay' || gameContext === 'gameLoaded') {
             return (
                 <div>
-                    <button 
-                    className='button home-button text paragraphs'
-                    style={{ position: 'fixed', bottom: '80px', right: '20px' }}
-                    onClick={onCharactersClick}>
+                    <button
+                        className='button home-button text paragraphs'
+                        style={{ position: 'fixed', bottom: '80px', right: '20px' }}
+                        onClick={onCharactersClick}
+                    >
                         Characters
                     </button>
-                    <button 
-                    className='button home-button text paragraphs'
-                    style={{ 
-                        position: 'absolute', bottom: '20px', right: '20px' }}
-                    onClick={onKeyClick}>
+                    <button
+                        className='button home-button text paragraphs'
+                        style={{ position: 'absolute', bottom: '20px', right: '20px' }}
+                        onClick={onKeyClick}
+                    >
                         Save Key
                     </button>
                 </div>
-            )
-        }
-        else {
+            );
+        } else {
             return null;
         }
     };
 
-
-
-
-
     return (
         <div className='edge-container footer-container'>
-
             <input
-            className='user-text user-input'
-            placeholder={placeholder}
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            onKeyDown={(e) => handleKeyPress(e)}
-            
+                className='user-text user-input'
+                placeholder={placeholder}
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                onKeyDown={(e) => handleKeyPress(e)}
             />
-
             {renderButtons()}
-            
-        
         </div>
     );
-
 };
 
 export default Footer;

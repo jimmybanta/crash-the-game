@@ -1,54 +1,58 @@
-
-import { React, useEffect, useState } from 'react';
-import axios from 'axios';
-
-import { BASE_URL } from '../BaseUrl';
+import React, { useEffect, useState } from 'react';
 
 import Setup from '../Components/Setup';
 import Loading from '../Components/Loading';
-import Game from './Game'
+import Game from './Game';
 
-axios.defaults.baseURL = BASE_URL;
-
-
-
+import { apiCall } from '../api';
 
 const NewGame = ({ onSetCurrentPage }) => {
+    // This component will be used to create a new game.
+    // First, it makes an API call to create a new game and return the save key.
+    // It prompts the user for a theme, timeframe, and details.
+    // Then it renders the Game component with that info.
 
+    // Game key & id
     const [saveKey, setSaveKey] = useState('');
     const [gameId, setGameId] = useState(null);
 
+    // Game info
     const [theme, setTheme] = useState('');
     const [timeframe, setTimeframe] = useState('');
     const [details, setDetails] = useState('');
+    const [gameTurn, setGameTurn] = useState(0);
 
+    // Whether or not the setup is complete
     const [setupComplete, setSetupComplete] = useState(false);
 
-    const [devMode, setDevMode] = useState('true');
-
+    // For development purposes
+    const [devMode, setDevMode] = useState('false');
 
     useEffect(() => {
-        // we need to make an api call to the backend to get a new game key
+        // We need to make an API call to the backend to get a new game key
 
-        const initializeGameKey = async () => {
+        const initializeSaveKey = async () => {
+            // Make an API call to create the game and return the save key
+            const [success, resp] = await apiCall({
+                method: 'post',
+                url: '/games/initialize_save_key/',
+                data: { dev: devMode }
+            });
 
-            try {
-                const response = await axios.post('/games/initialize_game_key/',
-                    { dev: devMode }
-                );
-                setSaveKey(response.data.save_key);
-                setGameId(response.data.game_id);
+            // If it was not successful, send them back to the home page to try again
+            if (!success) {
+                alert(resp);
+                window.location.reload();
+                return;
             }
-            catch (error) {
-                console.log('Error:', error);
-            }
+
+            // Set the save key and game id
+            setSaveKey(resp.save_key);
+            setGameId(resp.game_id);
         };
 
-        initializeGameKey();
-
+        initializeSaveKey();
     }, []);
-    
-
 
     const handleSetup = (theme, timeframe, details) => {
         setTheme(theme);
@@ -58,40 +62,44 @@ const NewGame = ({ onSetCurrentPage }) => {
     };
 
     return (
-    <div className='container flex-column'
-        style={{ justifyContent: 'center', alignItems: 'center',
-                height: '100%', 
+        <div
+            className='container flex-column'
+            style={{
+                justifyContent: 'center',
+                alignItems: 'center',
+                height: '100%',
                 width: '100%',
-                minWidth: '100%',
-        }}>
+                minWidth: '100%'
+            }}
+        >
+            {/* If we haven't setup yet, then render Setup */}
+            {!setupComplete && (
+                <Setup
+                    onSetCurrentPage={(page) => onSetCurrentPage(page)}
+                    onSubmit={(theme, timeframe, details) =>
+                        handleSetup(theme, timeframe, details)
+                    }
+                />
+            )}
 
-        
-            {/* if we haven't setup yet, then render setup
-            otherwise, render the main game */}
-            { !setupComplete && <Setup 
-            onSetCurrentPage={(page) => onSetCurrentPage(page)}
-            onSubmit={(theme, timeframe, details) => 
-            handleSetup(theme, timeframe, details)} />}
+            {/* If we have set up, but don't have the game key yet, then render Loading */}
+            {setupComplete && !saveKey && <Loading size={'large'} />}
 
-            {/* if we have set up, but don't have the game key yet
-            then render loading */}
-            { (setupComplete && !saveKey) && <Loading size={'large'} />}
-
-            {/* if we have the game key, then render the game */}
-            { setupComplete && saveKey && 
-            <Game 
-                gameContext={'newGame'}
-                theme={theme}
-                timeframe={timeframe}
-                details={details}
-                saveKey={saveKey}
-                gameId={gameId}
-                devMode={devMode}
-            />}
-         
-    </div>
-    )
-
+            {/* If we have the game key, then render the Game */}
+            {setupComplete && saveKey && (
+                <Game
+                    gameContext={'newGame'}
+                    theme={theme}
+                    timeframe={timeframe}
+                    details={details}
+                    gameTurn={gameTurn}
+                    saveKey={saveKey}
+                    gameId={gameId}
+                    devMode={devMode}
+                />
+            )}
+        </div>
+    );
 };
 
 export default NewGame;

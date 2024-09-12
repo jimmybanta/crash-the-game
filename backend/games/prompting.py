@@ -1,7 +1,7 @@
 
 ''' Contains functions for prompting the LLM API. '''
 
-
+import logging
 
 import anthropic
 
@@ -11,8 +11,10 @@ from anthropic.lib.streaming._types import MessageStopEvent as MessageStopEvent
 from anthropic.lib.streaming._types import TextEvent as TextEvent
 
 import config
-from utils import load_yaml
-from model_prices import calculate_price
+from games.utils import load_yaml
+from games.model_prices import calculate_price
+
+logger = logging.getLogger(__name__)
 
 # get the llm provider
 PROVIDER = config.llm['provider']
@@ -37,9 +39,6 @@ def prompt(message,
            ):
     ''' Prompts the LLM API with a message, and returns the response. '''
 
-    # TO DO LATER - add in prompt caching, for when prompts get longer (min prompt cache is 2048 tokens)
-    # TO DO LATER - add in token usage tracking? for cost purposes
-
     # the main prompt is always added in the system
     system_prompt = PROMPTS['main']
 
@@ -52,7 +51,7 @@ def prompt(message,
     if system:
         system_prompt += system
 
-    # if message is just a string, then send it as a human message
+    # if message is just a string, then send it as a user message
     if type(message) == str:
         messages = [
             {
@@ -80,7 +79,7 @@ def prompt(message,
                     ]
                 })
                     
-            elif item['writer'] == 'human':
+            elif item['writer'] == 'user':
                 messages.append({
                     'role': 'user',
                     'content': [
@@ -122,9 +121,10 @@ def prompt(message,
         if caching:
             parameters['system'][0]['cache_control'] = {"type": "ephemeral"}
 
-
+        logger.info(f'Calling Anthropic API with stream={stream} and caching={caching}')
 
         if stream:
+            
             return prompt_stream(parameters, client, 
                                  caching=caching,
                                  )

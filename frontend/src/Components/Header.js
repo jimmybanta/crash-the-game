@@ -1,9 +1,9 @@
-import { React, useState } from 'react';
+import React from 'react';
 import { ReactTyped } from 'react-typed';
 
 
 
-const Header = ({ gameContext, title}) => {
+const Header = ({ gameContext, title }) => {
 
     // function for rendering the title, based on the game context
     const renderTitle = () => {
@@ -11,18 +11,17 @@ const Header = ({ gameContext, title}) => {
         // if this is a new game or loading a game, then type out the title
         if (gameContext === 'newGame' || gameContext === 'loadGame') {
             return (
-                    <div className='container'>
-                        <div className='text title'>
-                            <ReactTyped
+                <div className='container'>
+                    <div className='text title'>
+                        <ReactTyped
                             strings={[title]}
                             typeSpeed={20}
                             showCursor={false}
-                            />
-                        </div>
+                        />
                     </div>
-                
+                </div>
             );
-        } 
+        }
         // otherwise, just display the title
         else {
             return (
@@ -38,8 +37,6 @@ const Header = ({ gameContext, title}) => {
             {renderTitle()}
         </div>
     );
-
-
 };
 
 

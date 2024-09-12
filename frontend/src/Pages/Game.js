@@ -1,4 +1,4 @@
-import { React, useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import axios from 'axios';
 
 
@@ -9,7 +9,7 @@ import Header from '../Components/Header';
 import Footer from '../Components/Footer';
 import Loading from '../Components/Loading';
 
-import { generateStream } from '../apiCall';
+import { apiCall, apiStream } from '../api';
 
 
 const Game = ( props ) => {
@@ -29,6 +29,7 @@ const Game = ( props ) => {
     const [theme, setTheme] = useState(props.theme);
     const [timeframe, setTimeframe] = useState(props.timeframe);
     const [details, setDetails] = useState(props.details);
+    const [gameTurn, setGameTurn] = useState(props.gameTurn);
 
     // game title and content
     const [title, setTitle] = useState(props.title ? props.title : '');
@@ -47,6 +48,10 @@ const Game = ( props ) => {
     // loading dots
     const [loading, setLoading] = useState(false);
 
+    // input text on error - used when there's an error
+    // streaming a response, to reset the input text
+    const [inputTextOnError, setInputTextOnError] = useState('');
+
     const [devMode, setDevMode] = useState(props.devMode);
 
     // auto-scroll
@@ -54,7 +59,7 @@ const Game = ( props ) => {
 
         // if we're loading a game (or a game has loaded), scroll to the bottom of the last textbox
         if (gameContext === 'loadGame' || gameContext === 'gameLoaded') {
-            bottomRef.current?.scrollIntoView({ behavior: 'instant', block: 'end' });
+            window.scrollBy({ top: 500, behavior: 'instant' });
         }
 
         // if the user has just submitted input, scroll so the loading dots are visible
@@ -68,9 +73,10 @@ const Game = ( props ) => {
     useEffect(() => {
 
         const populateInfo = async () => {
-            // need to populate the characters and the skills
-            console.log(gameId);
-            const charactersResp = await axios({
+            // populates the characters and the skills
+
+            // first, populate the characters
+            const [charactersSuccess, charactersResp] = await apiCall({
                 method: 'get',
                 url: '/games/api/characters/',
                 params: {
@@ -78,10 +84,14 @@ const Game = ( props ) => {
                 }
             });
 
-            setCharacters(charactersResp.data);
+            if (charactersSuccess) {
+                setCharacters(charactersResp);
+            }
+            // if it didn't work, then characters won't be set
+            // in the modal, it will display an error message
 
             // then, populate the skills
-            const skillsResp = await axios({
+            const [skillsSuccess, skillsResp] = await apiCall({
                 method: 'get',
                 url: '/games/api/skills/',
                 params: {
@@ -89,7 +99,9 @@ const Game = ( props ) => {
                 }
             });
 
-            setSkills(skillsResp.data);
+            if (skillsSuccess) {
+                setSkills(skillsResp);
+            }
 
         };
 
@@ -97,7 +109,8 @@ const Game = ( props ) => {
 
                 // make api call to initialize game
                 // first - generate the title
-                const titleResp = await axios({
+
+                const [titleSuccess, titleResp] = await apiCall({
                     method: 'post',
                     url: '/games/initialize_game_title/',
                     data: {
@@ -108,22 +121,37 @@ const Game = ( props ) => {
                         dev: devMode
                     }});
 
-                setTitle(titleResp.data.title);
+                if (!titleSuccess) {
+                    alert('There was a problem initializing the game - please try again.');
+                    // redirect to home
+                    window.location.href = '/';
+                    return;
+                }
+                
+                setTitle(titleResp.title);
                 
                 // then - generate the crash story
 
-                setLoading(true);
-
-                const crashStream = await generateStream(
-                    '/games/initialize_game_crash/',
-                    { game_id: gameId,
+                const crashStream = await apiStream({
+                    method: 'POST',
+                    url: '/games/initialize_game_crash/',
+                    data: {
+                        game_id: gameId,
                         dev: devMode
-                     }
-                );
-
+                    }});
+                    
                 // stream it in
                 let streamAccumulator = '';
                 for await (const chunk of crashStream) {
+                    
+                    // check for an error chunk
+                    if (chunk === 'CRASH-GAME-INITIALIZATION-ERROR-ABC123') {
+                        alert('There was a problem initializing the game - please try again.');
+                        // redirect to home
+                        window.location.href = '/';
+                        return;
+                    }
+
                     // add chunk to the current stream
                     streamAccumulator += chunk;
                     setCurrentStream(streamAccumulator);
@@ -136,27 +164,38 @@ const Game = ( props ) => {
                 let tempHistory = [...history];
                 tempHistory.push({
                     'writer': 'ai',
-                    'text': streamAccumulator
+                    'text': streamAccumulator,
+                    'turn': 'crash'
                 });
                 setHistory(tempHistory);
 
                 setLoading(true);
 
                 // then - generate the wakeup story
-                const wakeupStream = await generateStream(
-                    '/games/initialize_game_wakeup/',
-                    { game_id: gameId,
+                const wakeupStream = await apiStream({
+                    method: 'POST',
+                    url: '/games/initialize_game_wakeup/',
+                    data: {
+                        game_id: gameId,
                         crash_story: streamAccumulator,
                         dev: devMode
-                     }
-                );
-
+                    }});
+                
                 setLoading(false);
 
                 // reset the current stream
                 streamAccumulator = '';
                 // stream it in
                 for await (const chunk of wakeupStream) {
+
+                    // check for an error chunk
+                    if (chunk === 'CRASH-GAME-INITIALIZATION-ERROR-ABC123') {
+                        alert('There was a problem initializing the game - please try again.');
+                        // redirect to home
+                        window.location.href = '/';
+                        return;
+                    }
+
                     // add chunk to the current stream
                     streamAccumulator += chunk;
                     setCurrentStream(streamAccumulator);
@@ -168,7 +207,8 @@ const Game = ( props ) => {
                 // add it to history
                 tempHistory.push({
                     'writer': 'ai',
-                    'text': streamAccumulator
+                    'text': streamAccumulator, 
+                    'turn': 'wakeup'
                 });
                 setHistory(tempHistory);
 
@@ -185,10 +225,12 @@ const Game = ( props ) => {
             try {
 
                 // stream in the game history
-                const loadStream = await generateStream(
-                    '/games/load_game/',
-                    { save_key: saveKey, }
-                );
+                const loadStream = await apiStream({
+                    method: 'POST',
+                    url: '/games/load_game/',
+                    data: {
+                        save_key: saveKey
+                    }});
 
 
                 let tempHistory = [];
@@ -196,6 +238,14 @@ const Game = ( props ) => {
     
                 // stream it in
                 for await (const chunk of loadStream) {
+                    // error chunk
+                    if (chunk === 'CRASH-GAME-LOAD-ERROR-ABC123') {
+                        alert('There was a problem retrieving your game - please try again.');
+                        // redirect to home
+                        window.location.href = '/';
+                        return;
+                    }
+
                     // each chunk is a history item
                     // parse it
                     // add it to the current stream
@@ -205,7 +255,8 @@ const Game = ( props ) => {
                     setCurrentStream(streamAccumulator);
                     tempHistory.push({
                         'writer': chunkData.writer,
-                        'text': chunkData.text
+                        'text': chunkData.text,
+                        'turn': chunkData.turn
                     });
                     setHistory(tempHistory);
                     }
@@ -217,6 +268,9 @@ const Game = ( props ) => {
 
                 // then, set the game context to gameLoaded
                 setGameContext('gameLoaded');
+
+                // scroll down
+                window.scrollBy({ top: 500, behavior: 'smooth' });
 
                 }
 
@@ -249,10 +303,6 @@ const Game = ( props ) => {
         setCharactersModalOpen(!charactersModalOpen);
     };
 
-    const test = () => {
-        setSaveKeyModalOpen(true);
-    };
-
     const handleUserSubmit = async (text) => {
 
         // if a game has just been loaded and this is the player's 
@@ -268,11 +318,13 @@ const Game = ( props ) => {
             setLoading(true);
 
             // then, make an api call to get the game intro
-            const gameIntroStream = await generateStream(
-                '/games/initialize_game_intro/',
-                { game_id: gameId,
-                 }
-            );
+            const gameIntroStream = await apiStream({
+                method: 'POST',
+                url: '/games/initialize_game_intro/',
+                data: {
+                    game_id: gameId,
+                }
+            });
 
             // turn off the loading dots
             setLoading(false);
@@ -282,6 +334,15 @@ const Game = ( props ) => {
             const words = 500;
             let i = 0;
             for await (const chunk of gameIntroStream) {
+                // error handling
+                if (chunk === 'CRASH-GAME-INITIALIZATION-ERROR-ABC123') {
+                    alert('There was a problem initializing the game - please try again.');
+                    // redirect to home
+                    window.location.href = '/';
+                    return;
+                }
+
+
                 // add chunk to the current stream
                 streamAccumulator += chunk;
 
@@ -301,7 +362,8 @@ const Game = ( props ) => {
             let tempHistory = [...history];
             tempHistory.push({
                 'writer': 'intro',
-                'text': streamAccumulator
+                'text': streamAccumulator,
+                'turn': 'intro'
             });
             setHistory(tempHistory);
 
@@ -317,26 +379,37 @@ const Game = ( props ) => {
                 return;
             }
 
+            // update the game turn
+            const currentTurn = gameTurn + 1;
+            setGameTurn(currentTurn);
+            console.log('Game turn:', currentTurn);
+
+            setInputTextOnError('');
+
             // render the loading dots
             setLoading(true);            
 
             // add the user text to history
             let tempHistory = [...history];
             tempHistory.push({
-                'writer': 'human',
-                'text': text
+                'writer': 'user',
+                'text': text,
+                'turn': currentTurn
             });
             setHistory(tempHistory);
 
             // call the main loop
-            const mainLoopStream = await generateStream(
-                '/games/main_loop/',
-                {   game_id: gameId,
+            const mainLoopStream = await apiStream({
+                method: 'POST',
+                url: '/games/main_loop/',
+                data: {
+                    game_id: gameId,
                     history: history,
                     user_input: text,
+                    turn: currentTurn,
                     dev: devMode
-                 }
-            );
+                }
+            });
 
             // turn off the loading dots
             setLoading(false);
@@ -346,6 +419,27 @@ const Game = ( props ) => {
             const words = 125;
             let i = 0;
             for await (const chunk of mainLoopStream) {
+                // error handling
+                if (chunk === 'CRASH-GAME-MAIN-LOOP-ERROR-ABC123') {
+                    // reset to the last turn
+
+                    // reset the game turn
+                    setGameTurn(currentTurn - 1);
+
+                    //// reset the stream
+                    streamAccumulator = '';
+                    setCurrentStream('');
+
+                    // reset the history
+                    tempHistory.pop();
+                    setHistory(tempHistory);
+
+                    // reset the user input
+                    setInputTextOnError(text);
+
+                    alert('There was a problem on our end - try again please!');
+                    return;
+                }
                 // add chunk to the current stream
                 streamAccumulator += chunk;
 
@@ -364,7 +458,8 @@ const Game = ( props ) => {
             // add response to history
             tempHistory.push({
                 'writer': 'ai',
-                'text': streamAccumulator
+                'text': streamAccumulator,
+                'turn': currentTurn
             });
             setHistory(tempHistory);
         }
@@ -381,6 +476,7 @@ const Game = ( props ) => {
         else {
             return (
                 <Footer 
+                inputText={inputTextOnError}
                 gameContext={gameContext}
                 onSubmit={(text) => handleUserSubmit(text)}
                 onKeyClick={saveKeyModalToggle}
@@ -398,11 +494,12 @@ const Game = ( props ) => {
                         justifyContent: 'flex-start', alignItems: 'top',
                         height: '100%',
                 }}>
-                {/* render the header - contains the title */}
-                <Header gameContext={gameContext} title={title} />
 
                 {/* render the loading screen if the title is still loading */}
-                {title === '' && <Loading size={'large'}/>}
+                {!title && <Loading size={'large'}/>}
+
+                {/* render the header - contains the title */}
+                <Header gameContext={gameContext} title={title} />
 
                 {/* go through the history, and render each text box */}
                 {history.map((item) => {
