@@ -20,6 +20,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 """ ## Storage with s3
 STORAGES = {"default": "storages.backends.s3boto3.S3Boto3Storage"} """
 
+if config.ENV == 'DEV':
+    DEBUG = True
+else:
+    DEBUG = False
+
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
@@ -135,9 +140,92 @@ MEDIA_URL = '/media/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-CORS_ALLOWED_ORIGINS = [
-    'http://localhost:3000',
-]
-
 CSRF_TRUSTED_ORIGINS = ['https://*.crashthegame.com']
 
+
+# configure allowed hosts and origins
+if config.ENV == 'DEV':
+    ALLOWED_HOSTS = ['*']
+
+    CORS_ALLOWED_ORIGINS = ['http://localhost:3000']
+
+elif config.ENV == 'STAG':
+    ALLOWED_HOSTS = ['api-stag.crashthegame.com', 'www.api-stag.crashthegame.com',
+                '127.0.0.1', 'localhost']
+    
+    CORS_ALLOWED_ORIGINS = ['https://*.crashthegame.com', 'https://staging.crashthegame.com']
+    
+elif config.ENV == 'PROD':
+    ALLOWED_HOSTS = ['api.crashthegame.com', 'www.api.crashthegame.com']
+
+    CORS_ALLOWED_ORIGINS = ['https://*.crashthegame.com', 'https://crashthegame.com']
+
+
+# configure logging
+if config.ENV == 'DEV':
+    LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            "format": (
+                u"%(asctime)s [%(levelname)-8s] "
+                "(%(module)s.%(funcName)s) %(message)s"
+            ),
+            "datefmt": "%Y-%m-%d %H:%M:%S",
+
+        },
+    },
+    'handlers': {
+        'file': {
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(BASE_DIR, 'logs/django.log'),
+            'formatter': 'verbose',
+        },
+    },
+    'loggers': {
+        '': {
+            'handlers': ['file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+    },
+} 
+
+elif config.ENV == 'STAG' or config.ENV == 'PROD':
+
+    # configure https
+    ## set period to 6 days
+    SECURE_HSTS_SECONDS = 518400
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+
+    # configure logging
+    LOGGING = {
+        'version': 1,
+        'disable_existing_loggers': False,
+        'formatters': {
+            'verbose': {
+                "format": (
+                    u"%(asctime)s [%(levelname)-8s] "
+                    "(%(module)s.%(funcName)s) %(message)s"
+                ),
+                "datefmt": "%Y-%m-%d %H:%M:%S",
+
+            },
+        },
+        'handlers': {
+            'file': {
+                'class': 'logging.FileHandler',
+                'filename': '/var/log/django/django.log',
+                'formatter': 'verbose',
+            },
+        },
+        'loggers': {
+            '': {
+                'handlers': ['file'],
+                'level': 'INFO',
+                'propagate': False,
+            }
+        },
+    }
