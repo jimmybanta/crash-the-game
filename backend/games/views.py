@@ -1,35 +1,31 @@
-''' The API views for the server. '''
+''' The views for the server. '''
 
-import time
-import os
-from uuid import uuid4
 import json
 import logging
+import os
+import time
+from uuid import uuid4
 
+from django_eventstream import send_event
 from django.http import JsonResponse, StreamingHttpResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.decorators import api_view
-from rest_framework import viewsets
 from rest_framework.exceptions import APIException
-from django_eventstream import send_event
+from rest_framework import viewsets
 
 import config
-from games.prompting import prompt
-
-from games.serializers import CharacterSerializer, SkillSerializer
-from games.models import Game, Location, Character, Skill
 
 import games.initialization as initialization
-from games.summarize import summarize, fix_summary_history
-from games.save_game import save_text, remove_turn
 from games.load_game import load_history, load_latest_file, load_json
+from games.models import Game, Location, Character, Skill
+from games.prompting import prompt
+from games.save_game import save_text, remove_turn
+from games.serializers import CharacterSerializer, SkillSerializer
+from games.summarize import summarize, fix_summary_history
+
 
 logger = logging.getLogger(__name__)
 
-
-DEV_GAME_ID = 191
-
-# Create your views here.
 
 ## Viewsets
 
@@ -92,7 +88,9 @@ class SkillViewSet(viewsets.ModelViewSet):
         else:
             raise CustomAPIException()
 
-# API Views
+
+## API Views
+
 @csrf_exempt
 @api_view(['GET'])
 def get_current_version(request):
@@ -108,15 +106,6 @@ def initialize_save_key(request):
     '''
     Creates a game, and a unique UUID for it, then returns the key for the user to have. 
     '''
-
-    dev = request.data['dev']
-    if dev == 'true':
-        time.sleep(1)
-
-        game = Game.objects.get(id=DEV_GAME_ID)
-        return JsonResponse({
-            'save_key': game.save_key, 
-            'game_id': DEV_GAME_ID})
 
     # generate a new key
     save_key = uuid4()
@@ -176,12 +165,6 @@ def initialize_game_title(request):
     timeframe = request.data['timeframe']
     details = request.data['details']
 
-    dev = request.data['dev']
-    if dev == 'true':
-        time.sleep(1)
-        game = Game.objects.get(id=DEV_GAME_ID)
-        return JsonResponse({'title': game.title})
-
     try:
         # generate the title and the cost to create it
         title, cost = initialization.create_title(theme=theme, timeframe=timeframe, details=details)
@@ -221,20 +204,6 @@ def initialize_game_crash(request):
     
     # get parameters
     game_id = request.data['game_id']
-
-
-    dev = request.data['dev']
-    if dev == 'true':
-        time.sleep(1)
-        with open(f'/Users/jimbo/Documents/coding/projects/survival-game/backend/game_files/{DEV_GAME_ID}/full_text/0.json', 'r') as f:
-            data = json.load(f)
-
-            def generate_response():
-                for char in data[0]['text']:
-                    time.sleep(0.0001)
-                    yield char
-
-            return StreamingHttpResponse(generate_response(), content_type='text/plain')
 
     # get the game
     game = Game.objects.get(id=game_id)
@@ -301,19 +270,6 @@ def initialize_game_wakeup(request):
     # get parameters
     game_id = request.data['game_id']
     crash_story = request.data['crash_story']
-
-    dev = request.data['dev']
-    if dev == 'true':
-        time.sleep(1)
-        def generate_response():
-            with open(f'/Users/jimbo/Documents/coding/projects/survival-game/backend/game_files/{DEV_GAME_ID}/full_text/0.json', 'r') as f:
-                data = json.load(f)
-
-                for char in data[1]['text']:
-                    time.sleep(0.0001)
-                    yield char
-        return StreamingHttpResponse(generate_response(), content_type='text/plain')
-
 
     try:
         # get the game
@@ -606,33 +562,15 @@ def main_loop(request):
         The current turn.
     '''
 
-    try:
-        dev = request.data['dev']
-    except:
-        dev = 'false'
-    if dev == 'true':
-        time.sleep(5)
-        with open(f'/Users/jimbo/Documents/coding/projects/survival-game/backend/game_files/{DEV_GAME_ID}/full_text/0.json', 'r') as f:
-            data = json.load(f)
-
-            save_text(game_id=game_id, new_data=data[4]['text'], writer='ai')
-
-            def generate_response():
-                for char in data[4]['text']:
-                    time.sleep(0.001)
-                    yield char
-
-        return StreamingHttpResponse(generate_response(), content_type='text/plain')
-
-
     game_id = request.data['game_id']
     user_input = request.data['user_input']
+    turn = int(request.data['turn'])
+
     # frontend history - all the text displayed in the frontend
     ## includes the crash story, wakeup story, game intro, then all user input and AI responses
     ## ends in the current user input
     frontend_history = request.data['history']
-    turn = int(request.data['turn'])
-
+    
     # first, check to see if the last item in summaries/full text is a user message
     ## if it is, then remove it
     ## something probably went wrong, preventing the AI from responding to it
@@ -686,8 +624,8 @@ def main_loop(request):
         main_loop_prompt += f'{characters}\n\n'
 
         main_loop_prompt += '''Here is the history of the game thus far:
-    Each of these, except for the last, is a summary of what happened.
-    The last is the full text. What you output should be more like the full text.\n\n'''
+Each of these, except for the last, is a summary of what happened.
+The last is the full text. What you output should be more like the full text.\n\n'''
 
         ## now, add the history
         history = load_history(game_id, summaries=True)
@@ -707,8 +645,8 @@ def main_loop(request):
         ## have to tell it not to create monsters, or else that's ALL it does
         history.append({'writer': 'user', 
                         'text': f'''{user_input}. Remember to keep it around 150-250 words.
-    When in doubt, make something surprising and exciting happen!
-    Avoid creating monsters and scary creatures - we're looking for drama, funny characters, and bizarre twists!'''})
+When in doubt, make something surprising and exciting happen!
+Avoid creating monsters and scary creatures - we're looking for drama, funny characters, and bizarre twists!'''})
         
         # check the history, and fix it if necessary
         history_fixed = fix_summary_history(history)

@@ -1,6 +1,8 @@
-''' This module contains the prices of the models used in the games,
-and a function that uses those prices to calculate the cost of an API call. '''
+''' Function for calculating the price of an API call, given 
+the model and usage data.'''
 
+
+# dict with the prices of the models
 models = {
     'claude-3-haiku-20240307': {
         'input_token_price': 0.00000025,

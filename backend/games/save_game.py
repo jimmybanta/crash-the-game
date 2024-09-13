@@ -1,13 +1,13 @@
-''' Contains functions for saving a game to the system. '''
+''' Functions for saving a game to the system. '''
 
-import config
-from pathlib import Path
 import json
 import os
+from pathlib import Path
 
-from games.load_game import load_json
+import config
 
 from games.decorators import retry_on_exception, catch_and_log
+from games.load_game import load_json
 from games.s3 import write_object
 from games.utils import get_gamefile_listdir, get_file_size, check_file_exists
 
@@ -17,14 +17,24 @@ def save_json(filepath, data):
     '''
     Saves a json to the system.
     Either to local or s3, depending on the environment.
+
+    Parameters
+    ----------
+    filepath : str
+        The path to the file.
+    data : dict
+        The data to save.
+
+    Returns
+    -------
+    None
     '''
 
     if config.ENV == 'DEV':
         with open(filepath, 'w') as f:
             json.dump(data, f, indent=4)
     else:
-        bucket = config.s3['data_bucket']
-        return write_object(bucket, filepath, json.dumps(data).encode('utf-8'))
+        write_object(config.s3['data_bucket'], filepath, json.dumps(data).encode('utf-8'))
 
 @catch_and_log
 def save_text(game_id, new_data, turn=None,
@@ -33,6 +43,25 @@ def save_text(game_id, new_data, turn=None,
               type='full_text'):
     '''
     Saves game data to the system.
+
+    Parameters
+    ----------
+    game_id : int
+        The game id.
+    new_data : dict
+        The new data to save.
+    turn : int | None
+        The turn number.
+    writer : str | 'ai'
+        The writer of the data.
+    save_type : str | 'append'
+        Whether to append the data to the file or overwrite it.
+    type : str | 'full_text'
+        The type of data to save.
+
+    Returns
+    -------
+    None
     '''
 
     if type in ['full_text', 'summaries']:
@@ -90,16 +119,30 @@ def remove_turn(game_id, turn):
     Removes a turn from a game.
     This is necessary when an error occurs in the middle of a turn,
     and we need to rewind the game to the previous turn.
+
+    Parameters
+    ----------
+    game_id : int
+        The game id.
+    turn : int
+        The turn to remove.
+
+    Returns
+    -------
+    None
     '''
 
-    # first, full text
+    ## first, full text
+    # get the full text files
     full_text_files = get_gamefile_listdir(os.path.join(config.file_save['path'], str(game_id), 'full_text'))
     
+    # if there are no files, then return
     try:
         last_full_text_file = full_text_files[-1]
     except IndexError:
         return
 
+    # load the last full text file
     full_text_data = load_json(os.path.join(config.file_save['path'], str(game_id), 'full_text', last_full_text_file))
         
     # remove the turn
@@ -108,14 +151,18 @@ def remove_turn(game_id, turn):
     # save the new full text
     save_text(game_id, new_full_text_data, save_type='overwrite', type='full_text')
     
-    # then, summaries
+
+    ## then, summaries
+    # get the summary files
     summary_files = get_gamefile_listdir(os.path.join(config.file_save['path'], str(game_id), 'summaries'))
 
+    # if there are no files, then return
     try:
         last_summary_file = summary_files[-1]
     except IndexError:
         return
 
+    # load the last summary file
     summary_data = load_json(os.path.join(config.file_save['path'], str(game_id), 'summaries', last_summary_file))
 
     # remove the turn

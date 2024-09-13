@@ -86,8 +86,7 @@ def get_gamefile_listdir(path):
         files = sorted(os.listdir(path))
 
     else:
-        bucket = config.s3['data_bucket']
-        files = list_objects(bucket, prefix=path)
+        files = list_objects(config.s3['data_bucket'], prefix=path)
 
     # remove any files that don't end in .json
     files = [file for file in files if file.endswith('.json')]
@@ -101,23 +100,41 @@ def get_file_size(filepath):
     '''
     Returns the size of a file in bytes.
     Loads file locally or from s3, depending on the environment.
+
+    Parameters
+    ----------
+    filepath : str
+        The path to the file.
+
+    Returns
+    -------
+    int
+        The size of the file in bytes.
     '''
 
     if config.ENV == 'DEV':
         return os.path.getsize(filepath)
     else:
-        bucket = config.s3['data_bucket']
-        return len(read_object(bucket, filepath))
+        return len(read_object(config.s3['data_bucket'], filepath))
     
 def check_file_exists(filepath):
     '''
     Checks if a file exists.
     Loads file locally or from s3, depending on the environment.
+
+    Parameters
+    ----------
+    filepath : str
+        The path to the file.
+
+    Returns
+    -------
+    bool
+        Whether the file exists.
     '''
 
     if config.ENV == 'DEV':
         return os.path.exists(filepath)
     else:
-        bucket = config.s3['data_bucket']
-        return check_object_exists(bucket, filepath)
+        return check_object_exists(config.s3['data_bucket'], filepath)
 

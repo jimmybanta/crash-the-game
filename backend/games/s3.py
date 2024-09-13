@@ -3,16 +3,32 @@
 import os
 import boto3
 
+from games.decorators import retry_on_exception
+
+
+@retry_on_exception(max_retries=3, delay=2)
 def aws_session():
     '''
-    Returns an AWS session.
+    Generates an AWS session.
+
+    Returns
+    -------
+    boto3.Session
     '''
 
     return boto3.Session()
 
+@retry_on_exception(max_retries=3, delay=2)
 def aws_client(service, session=None):
     '''
     Returns an AWS client.
+
+    Parameters
+    ----------
+    service : str
+        The AWS service to use.
+    session : boto3.Session | None
+        The session to use. If None, then a new session is created.
     '''
 
     if not session:
@@ -20,9 +36,24 @@ def aws_client(service, session=None):
 
     return session.client(service)
 
+@retry_on_exception(max_retries=3, delay=2)
 def read_object(bucket, key, client=None):
     '''
-    Reads an object from S3, returns binary data.
+    Reads an object from S3.
+
+    Parameters
+    ----------
+    bucket : str
+        The name of the bucket.
+    key : str
+        The key of the object.
+    client : boto3.client | None
+        The client to use. If None, then a new client is created.
+
+    Returns
+    -------
+    bytes 
+        The binary data of the file
     '''
 
     if not client:
@@ -30,18 +61,49 @@ def read_object(bucket, key, client=None):
 
     return client.get_object(Bucket=bucket, Key=key)['Body'].read()
 
+@retry_on_exception(max_retries=3, delay=2)
 def write_object(bucket_name, key, data, client=None):
-    '''Given binary data, writes to s3.'''
+    '''Writes an object to s3.
+    
+    Parameters
+    ----------
+    bucket_name : str
+        The name of the bucket.
+    key : str
+        The key of the object.
+    data : bytes
+        The data to write.
+    client : boto3.client | None
+        The client to use. If None, then a new client is created.
+
+    Returns
+    -------
+    None
+    '''
 
     if not client:
         client = aws_client('s3')
 
-    return client.put_object(Bucket=bucket_name, Key=key, Body=data)
+    client.put_object(Bucket=bucket_name, Key=key, Body=data)
     
-    
+@retry_on_exception(max_retries=3, delay=2)
 def list_objects(bucket, prefix='', client=None):
     '''
     Lists objects in an S3 bucket.
+
+    Parameters
+    ----------
+    bucket : str
+        The name of the bucket.
+    prefix : str | ''
+        The prefix to search for.
+    client : boto3.client | None
+        The client to use. If None, then a new client is created.
+    
+    Returns
+    -------
+    list
+        A list of the objects in the bucket.
     '''
 
     if not client:
@@ -62,9 +124,24 @@ def list_objects(bucket, prefix='', client=None):
     # remove the prefix from each item
     return [os.path.basename(obj['Key']) for obj in objects]
 
+@retry_on_exception(max_retries=3, delay=2)
 def check_object_exists(bucket, key, client=None):
     '''
     Checks if an object exists in an S3 bucket.
+
+    Parameters
+    ----------
+    bucket : str
+        The name of the bucket.
+    key : str
+        The key of the object.
+    client : boto3.client | None
+        The client to use. If None, then a new client is created.
+
+    Returns
+    -------
+    bool
+        Whether the object exists.
     '''
 
     if not client:

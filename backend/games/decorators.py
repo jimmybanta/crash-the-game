@@ -1,9 +1,12 @@
+''' Decorators for the games app. '''
 
-import time
-import logging
 from functools import wraps
+import logging
+import time
+
 
 logger = logging.getLogger(__name__)
+
 
 # decorator to catch exceptions and log them
 def catch_and_log(func):

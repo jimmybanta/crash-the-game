@@ -1,3 +1,4 @@
+''' Functions for loading game data from the system. '''
 import json
 import os
 
@@ -28,13 +29,24 @@ def load_json(filepath):
         with open(filepath, 'r') as f:
             return json.load(f)
     else:
-        bucket = config.s3['data_bucket']
-        return json.loads(read_object(bucket, filepath))
+        return json.loads(read_object(config.s3['data_bucket'], filepath))
 
 @retry_on_exception(max_retries=3, delay=2)
 def load_latest_file(game_id, type='full_text'):
     '''
-    Loads the latest game from the system.
+    Loads the latest file from the system.
+
+    Parameters
+    ----------
+    game_id : int
+        The game id.
+    type : str | 'full_text'
+        The type of file to load (full_text or summaries).
+
+    Returns
+    -------
+    dict
+        The data in the file.
     '''
 
     file_path = os.path.join(config.file_save['path'], str(game_id), type)
@@ -63,6 +75,7 @@ def load_history(game_id, summaries=False):
 
     history = []
 
+    # load every file in the directory
     for file in get_gamefile_listdir(file_path):
         data = load_json(os.path.join(file_path, file))
 

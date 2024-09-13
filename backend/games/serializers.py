@@ -1,4 +1,4 @@
-''' This file contains the serializers for the models in the games app. '''
+''' Contains the serializers for the models in the games app. '''
 
 from rest_framework import serializers
 

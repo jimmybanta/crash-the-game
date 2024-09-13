@@ -1,10 +1,9 @@
+''' Models for the games app. '''
 from django.db import models
-
-# Create your models here.
 
 
 class Game(models.Model):
-    '''A game.'''
+    '''A single story played by a user.'''
 
     # save key for the game - given to the player when they start the game,
     # and used to access the game later

@@ -1,23 +1,21 @@
-''' This file contains the URL patterns for the games app. '''
+''' Contains the URL patterns for the games app. '''
 
+import django_eventstream.urls
 from django.urls import path, include
 from rest_framework import routers
-import django_eventstream.urls
 
 import games.views as views
+
 
 # router
 router = routers.DefaultRouter()
 router.register(r'characters', views.CharacterViewSet, 'characters')
 router.register(r'skills', views.SkillViewSet, 'skills')
 
-
-
 urlpatterns = [
     path('api/', include(router.urls)),
 
     # event stream
-    #path('stream/', include(django_eventstream.urls), {'channels': ['game']}),
     path('stream/<game_id>/', include(django_eventstream.urls), 
          {'format-channels': ['game-{game_id}']}),
 

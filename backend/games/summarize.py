@@ -1,8 +1,7 @@
 ''' Functions to summarize text - for the purpose of increasing latency and decreasing costs from LLM API calls. '''
 
-
-from games.prompting import prompt
 from games.decorators import retry_on_exception, catch_and_log
+from games.prompting import prompt
 
 
 @retry_on_exception(max_retries=3, delay=3)
@@ -34,6 +33,7 @@ and be sure to include them in your summary.\n'''
 
     summary_prompt = f"Summarize the following text in {target_words} words: \n\n {text}"
 
+    # prompt the LLM for a summary and cost
     summary, cost = prompt(summary_prompt, 
                         system=system_prompt, stream=False, caching=False)
     

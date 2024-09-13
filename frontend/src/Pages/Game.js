@@ -85,6 +85,8 @@ const Game = (props) => {
     // input text on error - used when there's an error
     // streaming a response, to reset the input text
     const [inputTextOnError, setInputTextOnError] = useState('');
+    // last api call time - used to prevent spamming the server
+    const [lastAPICallTime, setLastAPICallTime] = useState(0);
 
     // for development purposes
     const [devMode, setDevMode] = useState(props.devMode);
@@ -95,10 +97,12 @@ const Game = (props) => {
     const currentStreamRef = useRef(state.currentStream);
     const gameTurnRef = useRef(state.gameTurn);
     const scrollWordRef = useRef(state.scrollWord);
+    const lastApiCallTimeRef = useRef(lastAPICallTime);
     useEffect(() => { gameContextRef.current = gameContext; }, [gameContext]);
     useEffect(() => { currentStreamRef.current = state.currentStream; }, [state.currentStream]);
     useEffect(() => { gameTurnRef.current = state.gameTurn; }, [state.gameTurn]);
     useEffect(() => { scrollWordRef.current = state.scrollWord; }, [state.scrollWord]);
+    useEffect(() => { lastApiCallTimeRef.current = lastAPICallTime; }, [lastAPICallTime]);
     
 
     // make sure gameTurn is set correctly on first render
@@ -390,10 +394,6 @@ const Game = (props) => {
         // if this is the player hitting enter after the wakeup story
         if (gameContextRef.current === 'gameIntro') {
 
-            if (currentStreamRef.current) {
-                alert('Patience...');
-                return;
-            }
             // render the loading dots
             setLoading(true);
 
@@ -415,17 +415,12 @@ const Game = (props) => {
             // then, set the game context to gamePlay
             // so the player can start playing
             setGameContext('gamePlay');
+            // need to set the ref here
+            // for some reason, it wasn't propgating to header and footer
+            gameContextRef.current = 'gamePlay';
         }
         // otherwise, this is the main gameplay
         else {
-            // if a response is still streaming in, don't let them submit
-            if (currentStreamRef.current) {
-                // reset the user input
-                setInputTextOnError(text);
-                alert('Patience...');
-                return;
-            }
-
             // increment the game turn
             dispatch({ type: 'nextTurn' });
 
@@ -459,6 +454,11 @@ const Game = (props) => {
                 handleRespError(mainLoopSuccess, mainLoopResp, text);
                 return;
             }
+
+            // set the last api call time
+            console.log('setting last api call time');
+            setLastAPICallTime(Date.now());
+            
             // cleanup the stream
             cleanupStream(state.gameTurn);
         }

@@ -1,4 +1,4 @@
-''' Configuration settings for the application. '''
+''' Configuration for the application. '''
 
 import os
 import dotenv
@@ -6,15 +6,12 @@ import json
 import boto3
 
 
-# load environment variables and aws region
-## this is necessary for when celery runs as a daemon
+# load environment variables
 dotenv.load_dotenv()
 
 # set environment
 ENV = os.getenv('ENV')
 REGION = os.getenv('AWS_REGION')
-
-# temporarily, to test out
 
 if not ENV:
     raise ValueError('Environment not set.')
@@ -33,7 +30,19 @@ def get_parameter(name, decrypt=False, env=ENV):
                              WithDecryption=decrypt)['Parameter']['Value']
 
 def set_value(name, decrypt=False, env=ENV):
-    '''Returns a value from the environment or parameter store.'''
+    '''
+    Returns a value from the environment or parameter store.
+
+    Parameters
+    ----------
+    name : str
+        The name of the value to retrieve.
+    decrypt : bool
+        Whether to decrypt the value.
+    env : str
+        The environment to retrieve the value from.
+    '''
+
     if ENV == 'DEV':
         return os.getenv(name)
     elif env in ['STAG', 'PROD', 'ALL']: 
@@ -42,32 +51,26 @@ def set_value(name, decrypt=False, env=ENV):
         raise ValueError('Invalid environment.')
     
 def set_llm_value(name, decrypt=False, env=ENV):
-    '''Returns a value for the LLM API from the environment or parameter store.'''
+    '''
+    Returns a value for the LLM API from the environment or parameter store.
+
+    Parameters
+    ----------
+    name : str
+        The name of the value to retrieve.
+    decrypt : bool
+        Whether to decrypt the value.
+    env : str
+        The environment to retrieve the value from.
+    '''
 
     # get the llm provider
     provider = set_value('LLM_PROVIDER', decrypt=decrypt, env=env)
 
+    # format the value name
     return set_value(f'{provider}_{name}', decrypt=decrypt, env=env)
 
 
-
-# use .env file for local development environment
-### THIS IS ONLY TEMPORARY
-if ENV == 'DEV' or ENV == 'STAG':
-    db_secrets = {
-        'username': os.getenv('DB_USER'),
-        'password': os.getenv('DB_PASSWORD')
-    }
-
-""" # load database credentials from secrets manager for staging and production
-if ENV == 'STAG' or ENV == 'PROD':
-    db_secrets = json.loads(
-        SM.get_secret_value(
-            SecretId='''arn:aws:secretsmanager:us-west-2:148045048853:\
-secret:rds!db-0edeaddf-aaff-4564-989e-5f3b7495a57f-bbOmc7'''
-        )['SecretString']
-    )
- """
 
 ## set configuration
 
@@ -75,7 +78,6 @@ django = {
     'secret_key': set_value('DJANGO_SECRET_KEY', decrypt=True, env='ALL'),
 }
 
-# TO DO - REPLACE DB VALUES IN PARAMETER STORE ONCE I SPIN UP THE RDS INSTANCE
 database = {
     'name': set_value('DB_NAME', decrypt=True),
     'user': set_value('DB_USER', decrypt=True),
@@ -83,7 +85,6 @@ database = {
     'endpoint': set_value('DB_ENDPOINT', decrypt=True),
     'port': set_value('DB_PORT', decrypt=True)
 }
-
 
 llm = {
     'provider': set_value('LLM_PROVIDER'),
@@ -103,15 +104,15 @@ s3 = {
     'data_bucket': set_value('DATA_BUCKET'),
 }
 
-# lists of themes, timeframes, and details for if the user wants a random setup
 
+## setup the random setup options
+# lists of themes, timeframes, and details for if the user wants a random setup
 with open(os.path.join(file_save['game_setup_path'], 'themes.txt')) as f:
     themes_data = f.read()
 with open(os.path.join(file_save['game_setup_path'], 'timeframes.txt')) as f:
     timeframes_data = f.read()
 with open(os.path.join(file_save['game_setup_path'], 'details.txt')) as f:
     details_data = f.read()
-
 
 random_setup = {
     'themes': [item.strip() for item in themes_data.split('\n') if item],

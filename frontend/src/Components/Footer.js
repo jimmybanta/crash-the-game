@@ -1,9 +1,13 @@
 import React, { useState, useEffect } from 'react';
 
+const MIN_API_CALL_INTERVAL = 10000;
+
 const Footer = ({ inputText, gameContext, onSubmit, onKeyClick, onCharactersClick }) => {
     // a component that sits along the bottom
     // where the user can input their commands
     // and see the characters and save key buttons
+
+    const [lastApiCallTime, setLastAPICallTime] = useState(null);
 
     const [inputValue, setInputValue] = useState(inputText);
 
@@ -25,10 +29,21 @@ const Footer = ({ inputText, gameContext, onSubmit, onKeyClick, onCharactersClic
 
     const handleKeyPress = (e) => {
         if (e.key === 'Enter') {
-            onSubmit(inputValue);
-            setInputValue('');
+
+            // check if the user is trying to spam the API
+            if (lastApiCallTime) {
+                const currentTime = new Date().getTime();
+                const timeSinceLastCall = currentTime - lastApiCallTime;
+
+                if (timeSinceLastCall < MIN_API_CALL_INTERVAL) {
+                    return;
+                }
         }
-    };
+        onSubmit(inputValue);
+        setInputValue('');
+        setLastAPICallTime(new Date().getTime());
+    }
+};
 
     const renderButtons = () => {
         if (gameContext === 'gamePlay' || gameContext === 'gameLoaded') {
