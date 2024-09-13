@@ -1,0 +1,2 @@
+0.9.0: Base version, used streaming responses with a wsgi server
+0.9.1: switched over to using django_eventstream for SSE's, with a daphne asgi server
