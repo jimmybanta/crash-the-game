@@ -1,7 +1,7 @@
 # CRASH
 Crash is an ai-generated, interactive story game.
 
-It can be played at crashthegame.com.
+It can be played at [crashthegame.com](https://crashthegame.com/).
 
 A user can provide a theme, timeframe, and other details (or they can choose a random setup), and a story will be generated on the fly for them to play through and interact with.
 A user is given a save key, which, as long as they hang on to it, will allow them to load their game later on and continue from where they left off.
