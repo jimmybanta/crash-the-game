@@ -229,6 +229,10 @@ elif config.ENV == 'STAG' or config.ENV == 'PROD':
                 'handlers': ['file'],
                 'level': 'INFO',
                 'propagate': False,
-            }
+            },
+            'daphne': {
+                'handlers': ['console'],
+                'level': 'INFO'
+            },      
         },
     }

@@ -2,7 +2,7 @@
 // the base url we should use for all requests
 // changes based on the environment
 
-const ENV = 'DEV';
+const ENV = 'PROD';
 
 
 let BASE_URL = '';

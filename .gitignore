@@ -21,6 +21,8 @@ _graveyard/
 node_modules/
 build-stag/
 build-prod/
+build-prod-old/
+build-stag-old/
 
 deploy-stag.sh
 deploy-prod.sh

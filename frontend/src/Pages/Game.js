@@ -154,7 +154,6 @@ const Game = (props) => {
                     // scroll
                     if ((currentStreamRef.current.split(' ').length > scrollWordRef.current) && 
                         (scrollWordRef.current < wordsDict[gameContextRef.current])) {
-                        console.log('scrolling', scrollWordRef.current);
                         window.scrollBy({ top: 500, behavior: 'smooth' });
                         dispatch({ type: 'incrementScrollWord' });
                     }
