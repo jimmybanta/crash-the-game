@@ -19,6 +19,11 @@ __pycache__
 _graveyard/
 
 node_modules/
+build-stag/
+build-prod/
+
+deploy-stag.sh
+deploy-prod.sh
 
 ## Github boilerplate gitignore
 

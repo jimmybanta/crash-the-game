@@ -155,7 +155,8 @@ elif config.ENV == 'STAG':
     ALLOWED_HOSTS = ['api-stag.crashthegame.com', 'www.api-stag.crashthegame.com',
                 '127.0.0.1', 'localhost']
     
-    CORS_ALLOWED_ORIGINS = ['https://*.crashthegame.com', 'https://staging.crashthegame.com']
+    CORS_ALLOWED_ORIGINS = ['https://*.crashthegame.com', 'https://staging.crashthegame.com',
+                            'http://jimmybanta-crash-test.s3-website-us-east-1.amazonaws.com/']
     
 elif config.ENV == 'PROD':
     ALLOWED_HOSTS = ['api.crashthegame.com', 'www.api.crashthegame.com']
