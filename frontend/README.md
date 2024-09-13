@@ -2,7 +2,11 @@
 
 The Crash frontend is written in HTML, CSS, and Javascript, 
 with React as the framework.
-It uses axios and fetch to make calls to the backend.
+It uses axios to make calls to the backend.
+
+Responses from the LLM are streamed in using Server Sent Events (SSEs), from the backend.
+Upon first render, a game will initiate a stream that is unique to that game ID.
+It will continue to listen for updates from the backend until the page is exited.
 
 ## Main Pages
 ### Home
@@ -59,8 +63,7 @@ A modal that displays the player's save key. This key is used to load a game tha
 
 ## utils/other files
 ### api.js
-Contains the functions that make calls to the backend.
-Both calls to return standard HTTP responses, and streaming responses (for the story text).
+Contains the fuction used to make calls to the backend. Uses axios.
 
 ### BaseUrl.js
 Contains the base URL for the backend. This is used in api.js to make calls to the backend.

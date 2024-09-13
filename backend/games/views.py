@@ -560,7 +560,7 @@ def load_game(request):
     '''
 
     # wait a couple seconds so the player can read the title, it doesn't all get thrown at once
-    time.sleep(2)
+    time.sleep(1)
 
     save_key = request.data['save_key']
 
@@ -568,7 +568,7 @@ def load_game(request):
         game = Game.objects.get(save_key=save_key)
     except:
         logger.exception(f'Problem finding game with save key {save_key}')
-        return HttpResponse('CRASH-GAME-LOAD-ERROR-ABC123', status=255)
+        return HttpResponse('There was a problem retrieving your game - please try again.', status=255)
 
     # load the game history
     history = load_history(game.id)
@@ -576,19 +576,17 @@ def load_game(request):
     logger.info(f'Loading game for game id={game.id}')
 
     # stream back the response
-    # want it to take a total of 4 seconds
+    # want it to take a max of 4 seconds
     time_per_chunk = 4 / len(history)
-    def generate_response():
-        try:
-            for item in history:
-                time.sleep(time_per_chunk)
-                yield json.dumps(item)
-        except:
-            yield 'CRASH-GAME-LOAD-ERROR-ABC123'
-            return
-
-    return StreamingHttpResponse(generate_response(), content_type='application/json')
-        
+    try:
+        for item in history:
+            time.sleep(min(time_per_chunk, 0.3))
+            send_event(f'game-{game.id}', 'message', {'item': item})
+    except:
+        logger.exception(f'Error streaming game for game id={game.id}')
+        return HttpResponse('There was a problem retrieving your game - please try again.', status=255)
+    
+    return JsonResponse({'success': 'game loaded - have fun!'})
 
 @csrf_exempt
 @api_view(['POST'])
@@ -708,8 +706,8 @@ def main_loop(request):
         # then, add the user input and some gentle encouragement and tips
         ## have to tell it not to create monsters, or else that's ALL it does
         history.append({'writer': 'user', 
-                        'text': f'''{user_input}.
-    Remember - when in doubt, make something surprising and exciting happen!
+                        'text': f'''{user_input}. Remember to keep it around 150-250 words.
+    When in doubt, make something surprising and exciting happen!
     Avoid creating monsters and scary creatures - we're looking for drama, funny characters, and bizarre twists!'''})
         
         # check the history, and fix it if necessary

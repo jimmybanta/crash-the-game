@@ -45,7 +45,7 @@ const TextBox = ({ gameContext, writer, text }) => {
                 whiteSpace: 'pre-wrap',
                 position: 'relative',
                 cursor: 'pointer',
-                marginBottom: '5%',
+                marginBottom: '10%',
             }}
             onClick={handleCollapse}
         >

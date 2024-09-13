@@ -12,23 +12,21 @@ import { BASE_URL } from '../BaseURL';
 import { cleanup } from '@testing-library/react';
 
 
-// set our state with a reducer
+// set our game state with a reducer
 const initialState = {
     currentStream: '',
     history: [],
     gameTurn: 1,
     scrollWord: 0,
 };
-
-// set our state
 const reducer = (state, action) => {
     switch (action.type) {
+        case 'setCurrentStream':
+            return { ...state, currentStream: action.payload };
         case 'clearCurrentStream':
             return { ...state, currentStream: '' };
         case 'appendCurrentStream':
             return { ...state, currentStream: state.currentStream + action.payload };
-        case 'getCurrentStream':
-            return state.currentStream;
         case 'appendHistory':
             return { ...state, history: [...state.history, action.payload] };
         case 'popHistory':
@@ -91,9 +89,6 @@ const Game = (props) => {
     // for development purposes
     const [devMode, setDevMode] = useState(props.devMode);
 
-    
-
-
     // need to use refs to keep track of current stream, gameContext, and gameTurn
     // as they get used in useEffects, or I need them changed and called in the same function
     const gameContextRef = useRef(gameContext);
@@ -120,30 +115,49 @@ const Game = (props) => {
         eventSource.onmessage = (event) => {
             // turn off the loading dots
             setLoading(false);
-            const chunk = JSON.parse(event.data).text;
+            const chunk = JSON.parse(event.data);
 
-            if (chunk) {
-                // add chunk to the current stream
-                dispatch({ type: 'appendCurrentStream', payload: chunk });
+            // if we're loading the game, then chunks are dictionaries
+            if (gameContextRef.current === 'loadGame') {
 
-                // wordsDict gives the number of words to scroll by
-                // scroll depends on game context
-                // i.e. it will scroll for the entire intro
-                // but only 150 words for a main response - so it doesn't go out of view
-                // just want to make it easier on the user
-                const wordsDict = {
-                    'newGame': 0,
-                    'loadGame': 0,
-                    'gameLoaded': 0,
-                    'gameIntro': 1000,
-                    'gamePlay': 100,
+                if (chunk.item) {
+                    // set the current stream to the text
+                    //dispatch({ type: 'setCurrentStream', payload: chunk.item.text });
+                    // add the chunk to history
+                    dispatch({ type: 'appendHistory', payload: {
+                        writer: chunk.item.writer,
+                        text: chunk.item.text,
+                        turn: chunk.item.turn,
+                    
+                    } });
                 }
-                // scroll
-                if ((currentStreamRef.current.split(' ').length > scrollWordRef.current) && 
-                    (scrollWordRef.current < wordsDict[gameContextRef.current])) {
-                    console.log('scrolling', scrollWordRef.current);
-                    window.scrollBy({ top: 500, behavior: 'smooth' });
-                    dispatch({ type: 'incrementScrollWord' });
+
+            }
+            // otherwise, chunks are just text
+            else {
+                if (chunk.text) {
+                    // add chunk to the current stream
+                    dispatch({ type: 'appendCurrentStream', payload: chunk.text });
+
+                    // wordsDict gives the number of words to scroll by
+                    // scroll depends on game context
+                    // i.e. it will scroll for the entire intro
+                    // but only 150 words for a main response - so it doesn't go out of view
+                    // just want to make it easier on the user
+                    const wordsDict = {
+                        'newGame': 0,
+                        'loadGame': 0,
+                        'gameLoaded': 0,
+                        'gameIntro': 1000,
+                        'gamePlay': 100,
+                    }
+                    // scroll
+                    if ((currentStreamRef.current.split(' ').length > scrollWordRef.current) && 
+                        (scrollWordRef.current < wordsDict[gameContextRef.current])) {
+                        console.log('scrolling', scrollWordRef.current);
+                        window.scrollBy({ top: 500, behavior: 'smooth' });
+                        dispatch({ type: 'incrementScrollWord' });
+                    }
                 }
             }
         };
@@ -152,12 +166,6 @@ const Game = (props) => {
         eventSource.onopen = () => {
             console.log('Connection to server opened.');
         };
-
-        /* // Handle errors
-        eventSource.onerror = (error) => {
-            console.error('EventSource error:', error);
-            //eventSource.close();
-        }; */
 
         // Cleanup on component unmount
         return () => {
@@ -175,22 +183,7 @@ const Game = (props) => {
             turn: turn,
         } });
 
-
-        /* let tempHistory = [...state.history];
-        tempHistory.push({
-            writer: writer,
-            //text: currentStreamRef.current,
-            text: state.currentStream,
-            turn: turn,
-        });
-        setHistory(tempHistory); */
-        //historyRef.current = tempHistory;
-
-        // then reset the current stream
-        //setCurrentStream('');
-        //currentStreamRef.current = '';
-
-
+        // reset the current stream
         dispatch({ type: 'clearCurrentStream' });
     };
 
@@ -237,12 +230,12 @@ const Game = (props) => {
     // run when currentStream or loading changes
     useEffect(() => {
         // if we're loading a game (or a game has loaded), scroll to the bottom of the last textbox
-        if (gameContext === 'loadGame' || gameContext === 'gameLoaded') {
+        if (gameContextRef.current === 'loadGame' || gameContextRef.current === 'gameLoaded') {
             window.scrollBy({ top: 500, behavior: 'instant' });
         }
 
         // if the user has just submitted input, scroll so the loading dots are visible
-        if (loading && !(gameContext === 'newGame')) {
+        if (loading && !(gameContextRef.current === 'newGame')) {
             window.scrollBy({ top: 500, behavior: 'smooth' });
         }
     }, [state.currentStream, loading]);
@@ -349,44 +342,18 @@ const Game = (props) => {
 
         // loads a game
         const loadGame = async () => {
-            // stream in the game history
-            const loadStream = await apiStream({
-                method: 'POST',
+            // get the game history
+            const [loadSuccess, loadResp] = await apiCall({
+                method: 'post',
                 url: '/games/load_game/',
                 data: {
+                    game_id: gameId,
                     save_key: saveKey,
+                    dev: devMode,
                 },
             });
-
-            let tempHistory = [];
-            let streamAccumulator = '';
-
-            /* // stream it in
-            for await (const chunk of loadStream) {
-                // error chunk
-                if (chunk === 'CRASH-GAME-LOAD-ERROR-ABC123') {
-                    alert('There was a problem retrieving your game - please try again.');
-                    // redirect to home
-                    window.location.href = '/';
-                    return;
-                }
-
-                // each chunk is a history item
-                // parse it
-                // add it to the current stream
-                const chunkData = JSON.parse(chunk);
-
-                streamAccumulator = chunkData.text;
-                setCurrentStream(streamAccumulator);
-                tempHistory.push({
-                    writer: chunkData.writer,
-                    text: chunkData.text,
-                    turn: chunkData.turn,
-                });
-                setHistory(tempHistory);
-            }
-            // reset the current stream
-            setCurrentStream(''); */
+            // handle errors
+            handleRespError(loadSuccess, loadResp);
 
             // then, populate the characters and skills
             populateInfo();
@@ -398,9 +365,9 @@ const Game = (props) => {
             window.scrollBy({ top: 500, behavior: 'smooth' });
         };
 
-        if (gameContext === 'newGame') {
+        if (gameContextRef.current === 'newGame') {
             initializeGame();
-        } else if (gameContext === 'loadGame') {
+        } else if (gameContextRef.current === 'loadGame') {
             loadGame();
         }
     }, []);
@@ -414,7 +381,7 @@ const Game = (props) => {
     const handleUserSubmit = async (text) => {
         // if a game has just been loaded and this is the player's
         // first move, then set the game context to gamePlay
-        if (gameContext === 'gameLoaded') {
+        if (gameContextRef.current === 'gameLoaded') {
             setGameContext('gamePlay');
         }
 
@@ -422,7 +389,7 @@ const Game = (props) => {
         dispatch({ type: 'resetScrollWord' });
 
         // if this is the player hitting enter after the wakeup story
-        if (gameContext === 'gameIntro') {
+        if (gameContextRef.current === 'gameIntro') {
 
             if (currentStreamRef.current) {
                 alert('Patience...');
@@ -501,7 +468,8 @@ const Game = (props) => {
     // render functions
     const renderFooter = () => {
         // if it's a new game or a game in the process of loading, don't render the footer
-        if (gameContext === 'newGame' || gameContext === 'loadGame') {
+        if (gameContextRef.current === 'newGame' || 
+            gameContextRef.current === 'loadGame') {
             return null;
         }
         // otherwise, render it
@@ -509,7 +477,7 @@ const Game = (props) => {
             return (
                 <Footer
                     inputText={inputTextOnError}
-                    gameContext={gameContext}
+                    gameContext={gameContextRef.current}
                     onSubmit={(text) => handleUserSubmit(text)}
                     onKeyClick={saveKeyModalToggle}
                     onCharactersClick={charactersModalToggle}
@@ -531,14 +499,14 @@ const Game = (props) => {
             {!title && <Loading size={'large'} />}
 
             {/* otherwise, render the header - contains the title */}
-            <Header gameContext={gameContext} title={title} />
+            <Header gameContext={gameContextRef.current} title={title} />
 
             {/* go through the history, and render each text box */}
             {state.history.map((item, index) => {
                 return (
                     <TextBox
                         key={index}
-                        gameContext={gameContext}
+                        gameContext={gameContextRef.current}
                         writer={item.writer}
                         text={item.text}
                     />
@@ -548,8 +516,8 @@ const Game = (props) => {
             {/* render the current stream, if there's anything in it */}
             {state.currentStream && (
                 <TextBox
-                    gameContext={gameContext}
-                    writer={gameContext === 'gameIntro' ? 'intro' : 'ai'}
+                    gameContext={gameContextRef.current}
+                    writer={gameContextRef.current === 'gameIntro' ? 'intro' : 'ai'}
                     text={state.currentStream}
                 />
             )}
