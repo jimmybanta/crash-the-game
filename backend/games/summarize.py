@@ -46,6 +46,7 @@ def fix_summary_history(history):
     Given a history of summaries, checks to make sure everything is formatted correctly.
     Mainly, checks that there are no consecutive 'ai' or 'human' texts, as the LLM can't accept these.
     If there are, it removes the first one.
+    Also checks that there are no empty blocks.
 
     Parameters
     ----------
@@ -70,6 +71,10 @@ def fix_summary_history(history):
                 continue
         except IndexError:
             pass
+
+        # check for empty text
+        if item['text'] == '':
+            item['text'] = 'continue'
         new_history.append(item)
     
     return new_history

@@ -43,8 +43,7 @@ export const apiCall = async ({method, url,
             }
     } 
     catch (error) {
-      alert('There was a problem communicating with the server - please try again.');
-      return [false, null];
+      return [false, 'There was a problem communicating with the server - please try again.'];
     }
     };
 

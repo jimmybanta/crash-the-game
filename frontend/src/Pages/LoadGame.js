@@ -21,7 +21,7 @@ const LoadGame = ({ onSetCurrentPage }) => {
     const [timeframe, setTimeframe] = useState('');
     const [details, setDetails] = useState('');
     const [title, setTitle] = useState('');
-    const [gameTurn, setGameTurn] = useState(0);
+    const [gameTurn, setGameTurn] = useState(null);
 
     // whether or not the user has input a key
     const [keyInput, setKeyInput] = useState(false);

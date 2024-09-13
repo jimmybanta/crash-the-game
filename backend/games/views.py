@@ -9,8 +9,9 @@ import logging
 from django.http import JsonResponse, StreamingHttpResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.decorators import api_view
-from rest_framework import viewsets, status
+from rest_framework import viewsets
 from rest_framework.exceptions import APIException
+from django_eventstream import send_event
 
 import config
 from games.prompting import prompt
@@ -216,7 +217,7 @@ def initialize_game_crash(request):
     '''
 
     # wait some time, to let the player read the title
-    time.sleep(0.5)
+    time.sleep(1)
     
     # get parameters
     game_id = request.data['game_id']
@@ -240,58 +241,48 @@ def initialize_game_crash(request):
 
     logger.info(f'Generating crash story for game id={game_id}')
 
-    # create a custom generator to return the crash story
-    def generate_response():
-        crash_story = ''
+    crash_story = ''
 
-        try:
-            # iterate through the crash story
-            for chunk in initialization.create_crash(title=game.title, theme=game.theme,
-                                    timeframe=game.timeframe, details=game.starting_details):
-                
-                # if it's text, yield it
-                if chunk['type'] == 'text':
-                    crash_story += chunk['text']
-                    yield chunk['text']
-                # the last chunk will be the message stop, which has cost data
-                # cost = cost to generate the crash story
-                elif chunk['type'] == 'message_stop':
-                    cost = chunk['cost']
-                    game.total_dollar_cost += cost
-        except:
-            logger.exception(f'Error creating crash story for game id={game_id}')
-            # return an error message
-            # this will let the frontend know that an error has occured
-            # and it can handle it accordingly
-            yield 'CRASH-GAME-INITIALIZATION-ERROR-ABC123'
-            return
+    try:
+        # iterate through
+        for chunk in initialization.create_crash(title=game.title, theme=game.theme,
+                                        timeframe=game.timeframe, details=game.starting_details):
             
-        
-        try:
-            # save the crash story to file
-            save_text(game_id=game_id, new_data=crash_story, turn='crash', writer='ai')
+            if chunk['type'] == 'text':
+                crash_story += chunk['text']
+                send_event(f'game-{game.id}', 'message', {'text': chunk['text']})
+            elif chunk['type'] == 'message_stop':
+                cost = chunk['cost']
+                game.total_dollar_cost += cost
+    except:
+        logger.exception(f'Error generating crash story for game id={game_id}')
+        return HttpResponse('There was a problem initializing the game. Please try again.', status=255)
 
-            # summarize the crash story
-            summary, summary_cost = summarize(crash_story, target_words=config.llm['summarization_target_word_count'])
+    try:
+        # save the crash story to file
+        save_text(game_id=game_id, new_data=crash_story, turn='crash', writer='ai')
 
-            # save a user message to summary file
-            crash_message = 'Start the story for me - have them crash land.'
-            save_text(game_id=game_id, new_data=crash_message, writer='user', turn='crash', type='summaries')
+        # summarize the crash story
+        summary, summary_cost = summarize(crash_story, target_words=config.llm['summarization_target_word_count'])
 
-            # then save the summary to file
-            save_text(game_id=game_id, new_data=summary, writer='ai', turn='crash', type='summaries')
+        # save a user message to summary file
+        crash_message = 'Start the story for me - have them crash land.'
+        save_text(game_id=game_id, new_data=crash_message, writer='user', turn='crash', type='summaries')
 
-            # update the game cost
-            game.total_dollar_cost += summary_cost
-            game.save()
-        except:
-            logger.exception(f'Error summarizing and saving crash story for game id={game_id}')
-            yield 'CRASH-GAME-INITIALIZATION-ERROR-ABC123'
-            return
-        
+        # then save the summary to file
+        save_text(game_id=game_id, new_data=summary, writer='ai', turn='crash', type='summaries')
 
-    # generate the crash and return it as a streaming response
-    return StreamingHttpResponse(generate_response(), content_type='text/plain')
+        # update the game cost
+        game.total_dollar_cost += summary_cost
+        game.save()
+    except:
+        logger.exception(f'Error summarizing and saving crash story for game id={game_id}')
+        return HttpResponse('There was a problem initializing the game. Please try again.', status=255)
+    
+    logger.info(f'Crash story generated for game id={game_id}')
+
+    # return the crash story so it can get passed to the next step
+    return JsonResponse({'crash_story': crash_story})
 
 @csrf_exempt
 @api_view(['POST'])
@@ -399,61 +390,55 @@ def initialize_game_wakeup(request):
     
     except:
         logger.exception(f'Error generating wakeup info for game id={game_id}')
-        return HttpResponse('CRASH-GAME-INITIALIZATION-ERROR-ABC123', status=255)
+        return HttpResponse('There was a problem initializing the game. Please try again.', status=255)
 
     logger.info(f'Generating wakeup scene for game id={game_id}')
 
     # finally, create the wake up scene, and return it to the player
-    # create a custom generator
-    def generate_response():
-        wakeup_story = ''
+    wakeup_story = ''
 
-        # iterate through the wakeup story
-        try:
-            for chunk in initialization.create_wakeup(crash_story, location_description, skills_str, characters_str,
-                                                        title=game.title, theme=game.theme,
-                                                        timeframe=game.timeframe, details=game.starting_details):
-                
-                # if it's text, yield it
-                if chunk['type'] == 'text':
-                    wakeup_story += chunk['text']
-                    yield chunk['text']
-                # the last chunk will be the message stop, which has cost data
-                elif chunk['type'] == 'message_stop':
-                    # add the cost to generate it
-                    cost = chunk['cost']
-                    game.total_dollar_cost += cost
-        except:
-            logger.exception(f'Error generating wakeup story for game id={game_id}')
-            yield 'CRASH-GAME-INITIALIZATION-ERROR-ABC123'
-            return
-        
-        
-        
-        try:
-            # save wakeup story to file
-            save_text(game_id=game_id, new_data=wakeup_story, turn='wakeup', writer='ai')
+    # iterate through the wakeup story
+    try:
+        for chunk in initialization.create_wakeup(crash_story, location_description, skills_str, characters_str,
+                                                    title=game.title, theme=game.theme,
+                                                    timeframe=game.timeframe, details=game.starting_details):
+            
+            # if it's text, yield it
+            if chunk['type'] == 'text':
+                wakeup_story += chunk['text']
+                send_event(f'game-{game.id}', 'message', {'text': chunk['text']})
+            # the last chunk will be the message stop, which has cost data
+            elif chunk['type'] == 'message_stop':
+                # add the cost to generate it
+                cost = chunk['cost']
+                game.total_dollar_cost += cost
+    except:
+        logger.exception(f'Error generating wakeup story for game id={game_id}')
+        return HttpResponse('There was a problem initializing the game. Please try again.', status=255)
+    
+    try:
+        # save wakeup story to file
+        save_text(game_id=game_id, new_data=wakeup_story, turn='wakeup', writer='ai')
 
-            # summarize the wakeup story
-            summary, summary_cost = summarize(wakeup_story, target_words=config.llm['summarization_target_word_count'])
+        # summarize the wakeup story
+        summary, summary_cost = summarize(wakeup_story, target_words=config.llm['summarization_target_word_count'])
 
-            # save a user message to summary file
-            wakeup_message = 'Now tell the story of them waking up in this new, strange place.'
-            save_text(game_id=game_id, new_data=wakeup_message, writer='user', turn='wakeup', type='summaries')
+        # save a user message to summary file
+        wakeup_message = 'Now tell the story of them waking up in this new, strange place.'
+        save_text(game_id=game_id, new_data=wakeup_message, writer='user', turn='wakeup', type='summaries')
 
-            # then save the summary to file
-            save_text(game_id=game_id, new_data=summary, writer='ai', turn='wakeup', type='summaries')
+        # then save the summary to file
+        save_text(game_id=game_id, new_data=summary, writer='ai', turn='wakeup', type='summaries')
 
-            # update game cost
-            game.total_dollar_cost += summary_cost
-            game.save()
-        except:
-            logger.exception(f'Error summarizing and saving wakeup story for game id={game_id}')
-            yield 'CRASH-GAME-INITIALIZATION-ERROR-ABC123'
-            return
+        # update game cost
+        game.total_dollar_cost += summary_cost
+        game.save()
+    except:
+        logger.exception(f'Error summarizing and saving wakeup story for game id={game_id}')
+        return HttpResponse('There was a problem initializing the game. Please try again.', status=255)
 
-    # generate the crash and return it as a streaming response
-    return StreamingHttpResponse(generate_response(), content_type='text/plain')
+    # return success
+    return JsonResponse({'success': "we're looking good back here frontend - thanks for all your hard work"})
 
 @csrf_exempt
 @api_view(['POST'])
@@ -510,6 +495,8 @@ So - what will you do next?'''
     
     # save the intro to file
     ## if we can't, skip it
+    ## this will only affect if the player loads the game at a future time,
+    ## and they won't see the intro
     try:
         save_text(game_id=game_id, new_data=intro, writer='intro', turn='intro')
     except:
@@ -519,17 +506,16 @@ So - what will you do next?'''
     logger.info(f'Streaming game intro for game id={game_id}')
     
     # stream back the response
-    def generate_response():
-        # if we have problems streaming it back, then raise an error
-        try:
-            for chunk in intro:
-                time.sleep(0.007)
-                yield chunk
-        except:
-            yield 'CRASH-GAME-INITIALIZATION-ERROR-ABC123'
-            return
+    # if we have problems streaming it back, then raise an error
+    try:
+        for chunk in intro:
+            time.sleep(0.007)
+            send_event(f'game-{game_id}', 'message', {'text': chunk})
+    except:
+        logger.exception(f'Error streaming intro for game id={game_id}')
+        return HttpResponse('There was a problem initializing the game. Please try again.', status=255)
 
-    return StreamingHttpResponse(generate_response(), content_type='text/plain')
+    return JsonResponse({'success': 'we are good to go - do your thing frontend'})
 
 @csrf_exempt
 @api_view(['POST'])
@@ -671,6 +657,7 @@ def main_loop(request):
         pass
 
     
+    # create the system prompt and history
     try:
         ## first, add the theme, timeframe, and details to the system prompt
         game = Game.objects.get(id=game_id)
@@ -729,66 +716,63 @@ def main_loop(request):
         history_fixed = fix_summary_history(history)
     except:
         logger.exception(f'Problem generating main loop prompt and history for game id={game_id}')
-        return HttpResponse('CRASH-GAME-MAIN-LOOP-ERROR-ABC123', status=255)
+        return HttpResponse('There was a problem - please try again.', status=255)
     
     logger.info(f'Generating main loop response for game id={game_id}')
 
-    def generate_response():
-        response = ''
-        try:
-            for chunk in prompt(history_fixed, context='main_loop', 
-                                system=main_loop_prompt, stream=True, caching=True):
-                
-                if chunk['type'] == 'text':
-                    response += chunk['text']
-                    yield chunk['text']
-                elif chunk['type'] == 'message_stop':
-                    # add the cost to generate it
-                    cost = chunk['cost']
-                    game.total_dollar_cost += cost
-        except:
-            logger.exception(f'Error generating main loop response for game id={game_id}')
-            yield 'CRASH-GAME-MAIN-LOOP-ERROR-ABC123'
-            return
+    response = ''
+    try:
+        for chunk in prompt(history_fixed, context='main_loop', 
+                            system=main_loop_prompt, stream=True, caching=True):
         
-
-        try:
-            # summarize the response
-            summary, summary_cost = summarize(response, target_words=config.llm['summarization_target_word_count'])
-
-            # update game
-            game.turns = turn
-            game.total_dollar_cost += summary_cost
-            game.save()
-
-            ## saving text
-
-            # first, save the user input to both the full text and summary files
-            save_text(game_id=game_id, new_data=user_input, writer='user', turn=turn, type='full_text')
-            save_text(game_id=game_id, new_data=user_input, writer='user', turn=turn, type='summaries')
-
-            # then save the response to file
-            save_text(game_id=game_id, new_data=response, turn=turn, writer='ai', type='full_text')
-
-            # then save the summmary to file
-            save_text(game_id=game_id, new_data=summary, turn=turn, writer='ai', type='summaries')
-        except:
-            # something has gone wrong, so we need to reset the turn
-            game.turns = turn - 1
-
-            # remove the turn from the summary and full text files
-            remove_turn(game_id, turn)
-
-            # save the game
-            game.save()
-
-            logger.exception(f'Error summarizing and saving main loop response for game id={game_id}')
-            yield 'CRASH-GAME-MAIN-LOOP-ERROR-ABC123'
-            return
-
+            if chunk['type'] == 'text':
+                response += chunk['text']
+                send_event(f'game-{game_id}', 'message', {'text': chunk['text']})
+            elif chunk['type'] == 'message_stop':
+                # add the cost to generate it
+                cost = chunk['cost']
+                game.total_dollar_cost += cost
+    except:
+        logger.exception(f'Error generating main loop response for game id={game_id}')
+        return HttpResponse('There was a problem - please try again.', status=255)
     
-    return StreamingHttpResponse(generate_response(), content_type='text/plain')
 
+    try:
+        # summarize the response
+        summary, summary_cost = summarize(response, target_words=config.llm['summarization_target_word_count'])
+
+        # update game
+        game.turns = turn
+        game.total_dollar_cost += summary_cost
+        game.save()
+
+        ## saving text
+
+        # first, save the user input to both the full text and summary files
+        save_text(game_id=game_id, new_data=user_input, writer='user', turn=turn, type='full_text')
+        save_text(game_id=game_id, new_data=user_input, writer='user', turn=turn, type='summaries')
+
+        # then save the response to file
+        save_text(game_id=game_id, new_data=response, turn=turn, writer='ai', type='full_text')
+
+        # then save the summmary to file
+        save_text(game_id=game_id, new_data=summary, turn=turn, writer='ai', type='summaries')
+
+    except:
+        # something has gone wrong, so we need to reset the turn
+
+        # remove the turn from the summary and full text files
+        remove_turn(game_id, turn)
+
+        game.turns = turn - 1
+        # save the game
+        game.save()
+
+        logger.exception(f'Error summarizing and saving main loop response for game id={game_id}')
+        
+        return HttpResponse('There was a problem - please try again.', status=255)
+
+    return JsonResponse({'success': 'locked and loaded - knock their socks off!'})
 
 
     

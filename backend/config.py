@@ -15,7 +15,6 @@ ENV = os.getenv('ENV')
 REGION = os.getenv('AWS_REGION')
 
 # temporarily, to test out
-ENV = 'STAG'
 
 if not ENV:
     raise ValueError('Environment not set.')

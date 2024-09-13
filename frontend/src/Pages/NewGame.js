@@ -21,7 +21,9 @@ const NewGame = ({ onSetCurrentPage }) => {
     const [theme, setTheme] = useState('');
     const [timeframe, setTimeframe] = useState('');
     const [details, setDetails] = useState('');
-    const [gameTurn, setGameTurn] = useState(0);
+    // start the game at turn 0
+    // this will be automatically incremented on the first turn
+    const gameTurn = 0;
 
     // Whether or not the setup is complete
     const [setupComplete, setSetupComplete] = useState(false);

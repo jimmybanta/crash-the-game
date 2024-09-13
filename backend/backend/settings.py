@@ -34,8 +34,10 @@ SECRET_KEY = config.django['secret_key']
 
 
 # Application definition
+ASGI_APPLICATION = 'backend.asgi.application'
 
 INSTALLED_APPS = [
+    'daphne',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',

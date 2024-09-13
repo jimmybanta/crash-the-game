@@ -2,6 +2,7 @@
 
 from django.urls import path, include
 from rest_framework import routers
+import django_eventstream.urls
 
 import games.views as views
 
@@ -10,8 +11,15 @@ router = routers.DefaultRouter()
 router.register(r'characters', views.CharacterViewSet, 'characters')
 router.register(r'skills', views.SkillViewSet, 'skills')
 
+
+
 urlpatterns = [
     path('api/', include(router.urls)),
+
+    # event stream
+    #path('stream/', include(django_eventstream.urls), {'channels': ['game']}),
+    path('stream/<game_id>/', include(django_eventstream.urls), 
+         {'format-channels': ['game-{game_id}']}),
 
     # getting the current version
     path('get_current_version/', views.get_current_version),

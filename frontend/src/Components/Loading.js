@@ -9,7 +9,8 @@ const Loading = ({ size }) => {
     return (
         <div className='container flex-row'
             style={{
-                justifyContent: (size === 'large') ? 'center' : 'flex-start',
+                //justifyContent: (size === 'large') ? 'center' : 'flex-start',
+                justifyContent: 'center',
                 paddingBottom: '20px'
             }}
         >
