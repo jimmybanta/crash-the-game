@@ -230,9 +230,5 @@ elif config.ENV == 'STAG' or config.ENV == 'PROD':
                 'level': 'INFO',
                 'propagate': False,
             },
-            'daphne': {
-                'handlers': ['console'],
-                'level': 'INFO'
-            },      
         },
     }
