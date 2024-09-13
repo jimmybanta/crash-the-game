@@ -6,6 +6,8 @@ wsgi_app = "backend.asgi:application"
 loglevel = "debug"
 # The number of worker processes for handling requests
 workers = 3
+# Worker class
+worker_class = "uvicorn.workers.UvicornWorker"
 # Timeout period
 timeout = 120
 # The socket to bind
