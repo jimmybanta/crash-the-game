@@ -186,15 +186,8 @@ def initialize_game_title(request):
     logger.info(f'Game title created for game id={game_id}: {title} -- theme: {theme}, timeframe: {timeframe}, details: {details}')
 
     # send me an email with game info
-    try:
-        # get the user's IP address
-        """ x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
-
-        if x_forwarded_for:
-            ip = x_forwarded_for.split(',')[0]
-        else:
-            ip = request.META.get('REMOTE_ADDR') """
-
+    try: 
+        # get user's ip address
         ip = request.META.get("HTTP_X_REAL_IP")
         
         # get the location
@@ -204,14 +197,31 @@ def initialize_game_title(request):
         region = response.json()['regionName']
         city = response.json()['city']
     except:
-        message = f'''Error getting user location.
-        ip = {ip}
-        response = {response.json()}
-        '''
-        logger.exception(message)
-        country = 'Unknown'
-        region = 'Unknown'
-        city = 'Unknown'
+        # if that way doesn't work, try using x_forwarded_for
+        try:
+            # get the user's IP address
+            x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+
+            if x_forwarded_for:
+                ip = x_forwarded_for.split(',')[0]
+            else:
+                ip = request.META.get('REMOTE_ADDR')
+
+            # get the location
+            response = requests.get(f'http://ip-api.com/json/{ip}')
+
+            country = response.json()['country']
+            region = response.json()['regionName']
+            city = response.json()['city']
+        except:
+            message = f'''Error getting user location.
+            ip = {ip}
+            response = {response.json()}
+            '''
+            logger.exception(message)
+            country = 'Unknown'
+            region = 'Unknown'
+            city = 'Unknown'
         
     try:
         # send myself an email with the game info
