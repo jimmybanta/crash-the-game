@@ -4,9 +4,11 @@ import json
 import logging
 import os
 import time
+import requests
 from uuid import uuid4
 
 from django_eventstream import send_event
+from django.core.mail import send_mail
 from django.http import JsonResponse, StreamingHttpResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.decorators import api_view
@@ -182,6 +184,45 @@ def initialize_game_title(request):
         return HttpResponse('Error initializing game. Please try again.', status=255)
     
     logger.info(f'Game title created for game id={game_id}: {title} -- theme: {theme}, timeframe: {timeframe}, details: {details}')
+
+    # send me an email with game info
+    try:
+        # get the user's IP address
+        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+
+        if x_forwarded_for:
+            ip = x_forwarded_for.split(',')[0]
+        else:
+            ip = request.META.get('REMOTE_ADDR')
+        
+        # get the location
+        response = requests.get(f'http://ip-api.com/json/{ip}')
+
+        country = response.json()['country']
+        region = response.json()['regionName']
+        city = response.json()['city']
+        
+        # send myself an email with the game info
+        send_mail(
+            title,
+            f'''New game of Crash:
+
+        Game ID: {game_id}
+
+        Theme: {theme}
+        Timeframe: {timeframe}
+        Details: {details}
+
+        User location: {city}, {region}, {country}
+        Current env: {config.ENV}
+            ''',
+            config.email['from_address'],
+            [config.email['to_address']],
+        )
+    # if there's an error, log it and move on
+    except:
+        logger.exception('Error sending email with game info.')
+        pass
 
     # return the title
     return JsonResponse({'title': title})

@@ -85,8 +85,6 @@ const Game = (props) => {
     // input text on error - used when there's an error
     // streaming a response, to reset the input text
     const [inputTextOnError, setInputTextOnError] = useState('');
-    // last api call time - used to prevent spamming the server
-    const [lastAPICallTime, setLastAPICallTime] = useState(0);
 
     // for development purposes
     const [devMode, setDevMode] = useState(props.devMode);
@@ -97,12 +95,10 @@ const Game = (props) => {
     const currentStreamRef = useRef(state.currentStream);
     const gameTurnRef = useRef(state.gameTurn);
     const scrollWordRef = useRef(state.scrollWord);
-    const lastApiCallTimeRef = useRef(lastAPICallTime);
     useEffect(() => { gameContextRef.current = gameContext; }, [gameContext]);
     useEffect(() => { currentStreamRef.current = state.currentStream; }, [state.currentStream]);
     useEffect(() => { gameTurnRef.current = state.gameTurn; }, [state.gameTurn]);
     useEffect(() => { scrollWordRef.current = state.scrollWord; }, [state.scrollWord]);
-    useEffect(() => { lastApiCallTimeRef.current = lastAPICallTime; }, [lastAPICallTime]);
     
 
     // make sure gameTurn is set correctly on first render
@@ -454,10 +450,6 @@ const Game = (props) => {
                 handleRespError(mainLoopSuccess, mainLoopResp, text);
                 return;
             }
-
-            // set the last api call time
-            console.log('setting last api call time');
-            setLastAPICallTime(Date.now());
             
             // cleanup the stream
             cleanupStream(state.gameTurn);

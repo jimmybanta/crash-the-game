@@ -220,3 +220,10 @@ elif config.ENV == 'STAG' or config.ENV == 'PROD':
             },
         },
     }
+
+
+# email
+EMAIL_BACKEND = 'django_ses.SESBackend'
+
+AWS_SES_REGION=config.email['region']
+AWS_SES_ENDPOINT=config.email['endpoint']

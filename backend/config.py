@@ -104,6 +104,13 @@ s3 = {
     'data_bucket': set_value('DATA_BUCKET'),
 }
 
+email = {
+    'from_address': set_value('EMAIL_FROM_ADDRESS', env='ALL', decrypt=True),
+    'to_address': set_value('EMAIL_TO_ADDRESS', env='ALL', decrypt=True),
+    'endpoint': set_value('AWS_SES_EMAIL_ENDPOINT', env='ALL'),
+    'region': set_value('AWS_SES_REGION', env='ALL')
+}
+
 
 ## setup the random setup options
 # lists of themes, timeframes, and details for if the user wants a random setup
