@@ -188,12 +188,14 @@ def initialize_game_title(request):
     # send me an email with game info
     try:
         # get the user's IP address
-        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        """ x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
 
         if x_forwarded_for:
             ip = x_forwarded_for.split(',')[0]
         else:
-            ip = request.META.get('REMOTE_ADDR')
+            ip = request.META.get('REMOTE_ADDR') """
+
+        ip = request.META.get("HTTP_X_REAL_IP")
         
         # get the location
         response = requests.get(f'http://ip-api.com/json/{ip}')
@@ -203,9 +205,8 @@ def initialize_game_title(request):
         city = response.json()['city']
     except:
         message = f'''Error getting user location.
-        x_forwarded_for = {x_forwarded_for}
         ip = {ip}
-        response = {response}
+        response = {response.json()}
         '''
         logger.exception(message)
         country = 'Unknown'
