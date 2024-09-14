@@ -206,9 +206,6 @@ def initialize_game_title(request):
         x_forwarded_for = {x_forwarded_for}
         ip = {ip}
         response = {response}
-        country = {country if country else 'null'}
-        region = {region if region else 'null'}
-        city = {city if city else 'null'}
         '''
         logger.exception(message)
         country = 'Unknown'
