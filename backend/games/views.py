@@ -201,7 +201,21 @@ def initialize_game_title(request):
         country = response.json()['country']
         region = response.json()['regionName']
         city = response.json()['city']
+    except:
+        message = f'''Error getting user location.
+        x_forwarded_for = {x_forwarded_for}
+        ip = {ip}
+        response = {response}
+        country = {country}
+        region = {region}
+        city = {city}
+        '''
+        logger.exception(message)
+        country = 'Unknown'
+        region = 'Unknown'
+        city = 'Unknown'
         
+    try:
         # send myself an email with the game info
         send_mail(
             title,
