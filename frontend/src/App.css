@@ -158,6 +158,18 @@ html, body {
   letter-spacing: .75px;
 }
 
+.main-game-button-text {
+  font-size: calc(1rem + .5vw); /* Relative font size */
+  user-select: none;
+}
+
+@media (max-width: 768px) {
+  .main-game-button-text {
+    font-size: calc(.7rem + .3vw); /* Relative font size */
+  }
+}
+
+
 .modal-text {
   font-size: calc(.75rem + .5vw); /* Relative font size */
   user-select: none;
@@ -223,6 +235,16 @@ html, body {
   padding-right: 0%;
 }
 
+.main-app-container {
+  padding-top: 8%;
+}
+
+@media (max-width: 768px) {
+  .main-app-container {
+    padding-top: 15%;
+  }
+}
+
 .flex-column {
   display: flex;
   flex-direction: column;
@@ -265,6 +287,12 @@ html, body {
 
 .main-game {
   width: var(--main-game-width);
+}
+
+@media (max-width: 768px) {
+  .main-game {
+    width: 85%;
+  }
 }
 
 

@@ -7,3 +7,5 @@
     - official launch!
 1.0.1:
     - the backend sends me an email whenever a new game is created, giving me game info
+1.0.2
+    - optimized frontend for mobile

@@ -13,13 +13,12 @@ function App() {
   return (
     <div className="App">
       <div
-        className='container flex-column'
+        className='container flex-column main-app-container'
         style={{
           height: '100%',
           width: '100%',
           minWidth: '100%',
           minHeight: '100%',
-          paddingTop: '8%',
           paddingBottom: '7%',
           overflow: 'auto',
         }}

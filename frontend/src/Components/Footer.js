@@ -50,14 +50,14 @@ const Footer = ({ inputText, gameContext, onSubmit, onKeyClick, onCharactersClic
             return (
                 <div>
                     <button
-                        className='button home-button text paragraphs'
+                        className='button home-button text main-game-button-text'
                         style={{ position: 'fixed', bottom: '80px', right: '20px' }}
                         onClick={onCharactersClick}
                     >
                         Characters
                     </button>
                     <button
-                        className='button home-button text paragraphs'
+                        className='button home-button text main-game-button-text'
                         style={{ position: 'absolute', bottom: '20px', right: '20px' }}
                         onClick={onKeyClick}
                     >
