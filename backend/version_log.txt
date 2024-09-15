@@ -9,3 +9,5 @@
     - the backend sends me an email whenever a new game is created, giving me game info
 1.0.2
     - optimized frontend for mobile
+1.0.3
+    - styled text with text shadow
