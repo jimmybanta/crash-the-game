@@ -74,7 +74,7 @@ const About = ({ onSetCurrentPage }) => {
                     <div className='text about-paragraphs'>Current version: {gameVersion}</div>
                 )}
 
-                <div className='button back-button text' onClick={() => onSetCurrentPage('Home')}>
+                <div className='button back-button text button-text' onClick={() => onSetCurrentPage('Home')}>
                     Back
                 </div>
             </div>

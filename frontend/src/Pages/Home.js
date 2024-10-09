@@ -10,13 +10,13 @@ const Home = ({ onSetCurrentPage }) => {
       </div>
 
       <div className='container flex-column' style={{ width: '100%', height: '66%', gap: '5%' }}>
-        <div className='button home-button text' onClick={() => onSetCurrentPage('NewGame')}>
+        <div className='button home-button text button-text' onClick={() => onSetCurrentPage('NewGame')}>
           New Game
         </div>
-        <div className='button home-button text' onClick={() => onSetCurrentPage('LoadGame')}>
+        <div className='button home-button text button-text' onClick={() => onSetCurrentPage('LoadGame')}>
           Load Game
         </div>
-        <div className='button home-button text' onClick={() => onSetCurrentPage('About')}>
+        <div className='button home-button text button-text' onClick={() => onSetCurrentPage('About')}>
           About
         </div>
       </div>

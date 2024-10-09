@@ -78,15 +78,15 @@ const Setup = ({ onSetCurrentPage, onSubmit }) => {
             </div>
 
             {/* buttons */}
-            <div className='button setup-for-me-button text' style={{ marginTop: '2%' }} onClick={() => handleRandomSetup()}>
+            <div className='button setup-for-me-button text button-text' style={{ marginTop: '2%' }} onClick={() => handleRandomSetup()}>
                 setup for me
             </div>
 
-            <div className='button home-button text' style={{ marginTop: '3%' }} onClick={() => handleSubmit()}>
+            <div className='button home-button text button-text' style={{ marginTop: '3%' }} onClick={() => handleSubmit()}>
                 Let's Play!
             </div>
 
-            <div className='button back-button text' style={{ marginTop: '3%' }} onClick={() => onSetCurrentPage('Home')}>
+            <div className='button back-button text button-text' style={{ marginTop: '3%' }} onClick={() => onSetCurrentPage('Home')}>
                 Back
             </div>
         </div>

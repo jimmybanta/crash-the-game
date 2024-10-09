@@ -83,14 +83,14 @@ const LoadGame = ({ onSetCurrentPage }) => {
                 />
 
                 <div
-                    className='button home-button text'
+                    className='button home-button text button-text'
                     style={{ marginTop: '3%' }}
                     onClick={() => getGameInfo()}
                 >
                     Load Game
                 </div>
                 <div
-                    className='button back-button text'
+                    className='button back-button text button-text'
                     style={{ marginTop: '7%' }}
                     onClick={() => onSetCurrentPage('Home')}
                 >

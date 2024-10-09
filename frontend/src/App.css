@@ -137,6 +137,10 @@ html, body {
   text-shadow: 3px 3px 1px rgba(0, 0, 0, 0.3);
 }
 
+.button-text {
+  text-shadow: 2px 2px 1px rgba(0, 0, 0, 0.2);
+}
+
 .user-text {
   color: var(--user-text-color);
 }

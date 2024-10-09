@@ -9,8 +9,17 @@ models = {
         'output_token_price': 0.00000125,
         'cache_input_token_price': 0.0000003,
         'cache_read_token_price': 0.00000003,
-    }
+    },
+    
+    'claude-3-5-sonnet-20240620': {
+        'input_token_price': 0.000003,
+        'output_token_price': 0.000015,
+        'cache_input_token_price': 0.00000375,
+        'cache_read_token_price': 0.0000003,
+    },
+
 }
+
 
 
 def calculate_price(model, tokens, caching=True):
