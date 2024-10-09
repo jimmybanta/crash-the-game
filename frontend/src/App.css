@@ -127,7 +127,13 @@ html, body {
   font-family: 'Handjet', sans-serif;
   text-align: left;
   user-select: none;
+}
 
+@media (max-width: 768px) {
+  .user-input {
+    width: 85%;
+    padding-right: 25%;
+  }
 }
 
 
@@ -166,14 +172,37 @@ html, body {
   /* text-shadow: none; */
 }
 
-.main-game-button-text {
+.main-game-button {
   font-size: calc(1rem + .5vw); /* Relative font size */
   user-select: none;
 }
 
+.characters-button {
+  position: fixed;
+  bottom: 80px;
+  right: 20px;
+}
+
 @media (max-width: 768px) {
-  .main-game-button-text {
-    font-size: calc(.7rem + .3vw); /* Relative font size */
+  .characters-button {
+    bottom: 55px;
+    right: 20px;
+  }
+}
+
+.save-button {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+}
+
+@media (max-width: 768px) {
+  .main-game-button {
+    font-size: calc(.7rem + .4vw); /* Relative font size */
+    padding-top: 5px;
+    padding-bottom: 5px;
+    padding-left: 10px;
+    padding-right: 10px;
   }
 }
 
@@ -245,11 +274,13 @@ html, body {
 
 .main-app-container {
   padding-top: 8%;
+  padding-bottom: 7%;
 }
 
 @media (max-width: 768px) {
   .main-app-container {
-    padding-top: 15%;
+    padding-top: 25%;
+    padding-bottom: 20%;
   }
 }
 

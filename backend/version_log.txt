@@ -11,3 +11,7 @@
     - optimized frontend for mobile
 1.0.3
     - styled text with text shadow
+1.0.4
+    - changed text shadow for the buttons to be more subtle
+1.0.5
+    - updated styling to make more usable on mobile

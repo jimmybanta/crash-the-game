@@ -19,7 +19,6 @@ function App() {
           width: '100%',
           minWidth: '100%',
           minHeight: '100%',
-          paddingBottom: '7%',
           overflow: 'auto',
         }}
       >
