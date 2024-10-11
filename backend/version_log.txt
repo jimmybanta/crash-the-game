@@ -15,3 +15,5 @@
     - changed text shadow for the buttons to be more subtle
 1.0.5
     - updated styling to make more usable on mobile
+1.0.6
+    - updated params in SSM to allow for multiple different apps - reflected this in config file

@@ -26,7 +26,7 @@ def get_parameter(name, decrypt=False, env=ENV):
     '''Returns a parameter from the Parameter store.'''
 
     # retrieve value from parameter store
-    return SSM.get_parameter(Name=f'/{env}/{name}',
+    return SSM.get_parameter(Name=f'/CRASH/{env}/{name}',
                              WithDecryption=decrypt)['Parameter']['Value']
 
 def set_value(name, decrypt=False, env=ENV):
