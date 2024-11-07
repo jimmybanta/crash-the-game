@@ -133,3 +133,5 @@ with open('current_version.json') as f:
     current_version = json.load(f)['version']
 
 game_version = current_version
+
+print(f'Using model {llm["model"]} from provider {llm["provider"]}.')

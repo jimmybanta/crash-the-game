@@ -18,6 +18,13 @@ models = {
         'cache_read_token_price': 0.0000003,
     },
 
+    'claude-3-5-haiku-20241022': {
+        'input_token_price': 0.000001,
+        'output_token_price': 0.000005,
+        'cache_input_token_price': .00000125,
+        'cache_read_token_price': 0.0000001,
+    }
+
 }
 
 
