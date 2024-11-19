@@ -58,6 +58,8 @@ It creates the prompt for the LLM, sends it to the LLM, and then sends the respo
 Contains text files for prompting and random setup of a game.
 #### backend
 Contains the settings for the Django application.
+#### tests
+Contains tests for the games app.
 #### config.py
 Contains the configuration for the game - runs on startup to pull values from s3 parameter store.
 #### current_version.json
