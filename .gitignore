@@ -13,6 +13,7 @@ run.py
 game_data/
 logs/
 deploy.sh
+.vscode/
 
 read_stories.py
 
