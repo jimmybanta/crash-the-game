@@ -17,7 +17,6 @@ deploy.sh
 
 read_stories.py
 
-tests
 __pycache__
 
 _graveyard/
