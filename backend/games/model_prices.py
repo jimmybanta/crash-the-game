@@ -17,6 +17,12 @@ models = {
         'cache_input_token_price': 0.00000375,
         'cache_read_token_price': 0.0000003,
     },
+    'claude-sonnet-4-5-20250929': {
+        'input_token_price': 0.000003,
+        'output_token_price': 0.000015,
+        'cache_input_token_price': 0.00000375,
+        'cache_read_token_price': 0.0000003,
+    },
 
     'claude-3-5-haiku-20241022': {
         'input_token_price': 0.000001,

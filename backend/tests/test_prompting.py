@@ -2,9 +2,7 @@
 import pytest
 import config
 
-from games.prompting import prompt, prompt_stream
-from anthropic.lib.streaming._prompt_caching_beta_types import MessageStopEvent as CacheMessageStopEvent
-from anthropic.lib.streaming._prompt_caching_beta_types import TextEvent as CacheTextEvent
+from games.prompting import prompt
 
 
 @pytest.fixture
